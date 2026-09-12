@@ -256,15 +256,15 @@ export default function App() {
   });
   const [geminiModel, setGeminiModel] = useState(() => {
     const saved = localStorage.getItem('gemini_model');
-    if (!saved || saved.includes('1.5') || saved.includes('2.0')) {
-      return 'gemini-3.6-flash';
+    if (!saved || saved.includes('3.6') || saved.includes('2.5')) {
+      return 'gemini-2.0-flash';
     }
     return saved;
   });
   const [availableModels, setAvailableModels] = useState([
-    { id: 'gemini-3.6-flash', name: 'gemini-3.6-flash (Latest & Recommended)' },
-    { id: 'gemini-2.5-flash', name: 'gemini-2.5-flash' },
-    { id: 'gemini-2.5-pro', name: 'gemini-2.5-pro' }
+    { id: 'gemini-2.0-flash', name: 'gemini-2.0-flash (Latest & Recommended)' },
+    { id: 'gemini-1.5-flash', name: 'gemini-1.5-flash (Fast & Stable)' },
+    { id: 'gemini-1.5-pro', name: 'gemini-1.5-pro (Advanced Reasoning)' }
   ]);
   const [isFetchingModels, setIsFetchingModels] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -402,6 +402,9 @@ Tap Install and launch your next high-converting store listing today!`
     try {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
       const data = await res.json();
+      if (data.error) {
+        throw new Error(data.error.message || 'Failed to list models');
+      }
       if (data.models && Array.isArray(data.models)) {
         const supported = data.models
           .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
@@ -409,13 +412,13 @@ Tap Install and launch your next high-converting store listing today!`
             const cleanId = m.name.replace(/^models\//, '');
             return {
               id: cleanId,
-              name: `${cleanId}${cleanId.includes('3.6') || cleanId.includes('flash') ? ' (Recommended)' : ''}`
+              name: `${cleanId}${cleanId.includes('2.0') || cleanId.includes('flash') ? ' (Recommended)' : ''}`
             };
           });
         if (supported.length > 0) {
           setAvailableModels(supported);
           if (!supported.some(m => m.id === geminiModel)) {
-            const best = supported.find(m => m.id.includes('3.6') || m.id.includes('flash'))?.id || supported[0].id;
+            const best = supported.find(m => m.id.includes('2.0') || m.id.includes('flash'))?.id || supported[0].id;
             setGeminiModel(best);
             localStorage.setItem('gemini_model', best);
           }
@@ -425,6 +428,13 @@ Tap Install and launch your next high-converting store listing today!`
       }
     } catch (err) {
       console.warn('Could not list models:', err);
+      setTestStatus('error');
+      const msg = err.message || 'Could not fetch models.';
+      if (msg.toLowerCase().includes('invalid authentication credentials') || msg.toLowerCase().includes('oauth 2') || msg.toLowerCase().includes('devconsole-project')) {
+        setTestMessage('Invalid API Key: Please verify your Gemini API key from Google AI Studio (starts with "AIzaSy...").');
+      } else {
+        setTestMessage(msg);
+      }
     }
     setIsFetchingModels(false);
   };
@@ -436,13 +446,18 @@ Tap Install and launch your next high-converting store listing today!`
       setTestMessage('Please enter an API key first.');
       return;
     }
+    if (key.includes('.apps.googleusercontent.com')) {
+      setTestStatus('error');
+      setTestMessage('Invalid Key Type: You entered an OAuth Client ID instead of a Gemini API Key. Please get an API key starting with "AIzaSy..." from Google AI Studio.');
+      return;
+    }
     setTestStatus('testing');
     setTestMessage('Testing connection to Gemini API...');
     try {
       let targetModel = geminiModel;
-      if (targetModel.includes('1.5') || targetModel.includes('2.0')) {
-        targetModel = 'gemini-3.6-flash';
-        setGeminiModel('gemini-3.6-flash');
+      if (!targetModel || targetModel.includes('3.6') || targetModel.includes('2.5')) {
+        targetModel = 'gemini-2.0-flash';
+        setGeminiModel('gemini-2.0-flash');
       }
 
       let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${key}`, {
@@ -466,12 +481,12 @@ Tap Install and launch your next high-converting store listing today!`
                 const cleanId = m.name.replace(/^models\//, '');
                 return {
                   id: cleanId,
-                  name: `${cleanId}${cleanId.includes('3.6') || cleanId.includes('flash') ? ' (Recommended)' : ''}`
+                  name: `${cleanId}${cleanId.includes('2.0') || cleanId.includes('flash') ? ' (Recommended)' : ''}`
                 };
               });
             if (supported.length > 0) {
               setAvailableModels(supported);
-              const bestModel = supported.find(m => m.id.includes('3.6') || m.id.includes('flash'))?.id || supported[0].id;
+              const bestModel = supported.find(m => m.id.includes('2.0') || m.id.includes('flash'))?.id || supported[0].id;
               targetModel = bestModel;
               setGeminiModel(bestModel);
               
@@ -500,7 +515,14 @@ Tap Install and launch your next high-converting store listing today!`
       setIsGeminiVerified(false);
       localStorage.removeItem('gemini_verified');
       setTestStatus('error');
-      setTestMessage(err.message || 'Failed to authenticate.');
+      const msg = err.message || 'Failed to authenticate.';
+      if (msg.toLowerCase().includes('denied access')) {
+        setTestMessage('Google denied access for this project. Please create a NEW key in a NEW project at aistudio.google.com (use a VPN like Singapore/US if in Myanmar or restricted region).');
+      } else if (msg.toLowerCase().includes('invalid authentication credentials') || msg.toLowerCase().includes('oauth 2') || msg.toLowerCase().includes('devconsole-project')) {
+        setTestMessage('Invalid API Key: Google rejected this credential. Make sure you are using a Gemini API Key from Google AI Studio (starts with "AIzaSy..."), NOT an OAuth Client ID, Firebase key, or Google Cloud secret. Click "Get Free Key ↗" above.');
+      } else {
+        setTestMessage(msg);
+      }
     }
   };
 
@@ -524,8 +546,8 @@ Tap Install and launch your next high-converting store listing today!`
     parts.push({ text: prompt });
 
     let activeModel = geminiModel;
-    if (activeModel.includes('1.5') || activeModel.includes('2.0')) {
-      activeModel = 'gemini-3.6-flash';
+    if (!activeModel || activeModel.includes('3.6') || activeModel.includes('2.5')) {
+      activeModel = 'gemini-2.0-flash';
     }
 
     let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${key}`, {
@@ -539,7 +561,7 @@ Tap Install and launch your next high-converting store listing today!`
     let data = await res.json();
 
     if (data.error && (data.error.message?.includes('not found') || data.error.message?.includes('no longer available'))) {
-      const fallback = 'gemini-3.6-flash';
+      const fallback = 'gemini-1.5-flash';
       res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${fallback}:generateContent?key=${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1936,6 +1958,11 @@ Example format:
                     </button>
                   </div>
                   <p className="text-[10px] text-gray-500">Stored safely in your browser's localStorage.</p>
+                  {geminiApiKey.trim() && !geminiApiKey.trim().startsWith('AIzaSy') && (
+                    <p className="text-[11px] text-amber-400 bg-amber-950/40 border border-amber-800/50 rounded-lg p-2 flex items-start gap-1.5 mt-1 leading-snug">
+                      <span>⚠️ Note: Official Gemini API keys from Google AI Studio start with <code className="font-mono bg-amber-900/60 px-1 py-0.5 rounded text-amber-200">AIzaSy</code>. Check if you pasted the correct key.</span>
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
@@ -1955,10 +1982,10 @@ Example format:
                     onChange={e => setGeminiModel(e.target.value)}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 cursor-pointer"
                   >
-                    <option value="gemini-3.6-flash">gemini-3.6-flash (Latest & Recommended)</option>
-                    <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                    <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-                    {availableModels.filter(m => !['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.5-pro'].includes(m.id)).map(m => (
+                    <option value="gemini-2.0-flash">gemini-2.0-flash (Latest & Recommended)</option>
+                    <option value="gemini-1.5-flash">gemini-1.5-flash (Fast & Stable)</option>
+                    <option value="gemini-1.5-pro">gemini-1.5-pro (Advanced Reasoning)</option>
+                    {availableModels.filter(m => !['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'].includes(m.id)).map(m => (
                       <option key={m.id} value={m.id}>{m.name || m.id}</option>
                     ))}
                   </select>
