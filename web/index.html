@@ -21,30 +21,102 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
 
+  <!-- Anti-cache meta tags -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="journey_test_pro">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png?v=5">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=5"/>
-  <link rel="shortcut icon" type="image/png" href="favicon.png?v=5"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png"/>
+  <link rel="shortcut icon" type="image/png" href="favicon.png"/>
 
   <title>journey_test_pro</title>
-  <link rel="manifest" href="manifest.json?v=5">
+  <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <!-- In-browser Update Toast Notification -->
+  <div id="flutter-update-toast" style="display:none; position:fixed; bottom:24px; right:24px; z-index:9999999; background:rgba(17,24,39,0.95); backdrop-filter:blur(8px); border:1px solid #4f46e5; border-radius:12px; padding:14px 20px; box-shadow:0 12px 30px rgba(0,0,0,0.6); color:#f3f4f6; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; align-items:center; gap:14px;">
+    <div style="display:flex; flex-direction:column; gap:2px;">
+      <span style="font-weight:700; font-size:13px; color:#e0e7ff; display:flex; align-items:center; gap:6px;">
+        <span style="width:8px; height:8px; border-radius:50%; background:#22c55e; display:inline-block; box-shadow:0 0 8px #22c55e;"></span>
+        New Version Available
+      </span>
+      <span style="font-size:11px; color:#9ca3af;">A new update has been deployed. Refresh to apply.</span>
+    </div>
+    <button id="flutter-refresh-btn" style="background:#4f46e5; border:none; color:#ffffff; font-size:12px; font-weight:600; padding:7px 14px; border-radius:8px; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 6px rgba(79,70,229,0.4);">
+      Refresh Now
+    </button>
+  </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // Force purge caches and reload
+    async function purgeCacheAndReload() {
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+      } catch (err) {
+        console.warn('Cache purge error:', err);
+      }
+      window.location.reload(true);
+    }
+
+    const refreshBtn = document.getElementById('flutter-refresh-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', purgeCacheAndReload);
+    }
+
+    // Version update checker
+    async function checkBrowserAppUpdate() {
+      try {
+        const res = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) return;
+        const info = await res.json();
+        const latestVersion = info.version + '+' + info.build_number;
+        const currentVersion = localStorage.getItem('app_build_version');
+
+        if (currentVersion && currentVersion !== latestVersion) {
+          console.log('[Update Detected] Stored:', currentVersion, 'Latest:', latestVersion);
+          const toast = document.getElementById('flutter-update-toast');
+          if (toast) {
+            toast.style.display = 'flex';
+          }
+        } else {
+          localStorage.setItem('app_build_version', latestVersion);
+        }
+      } catch (err) {
+        console.debug('Update check error:', err);
+      }
+    }
+
+    // Check on startup and tab visibility
+    checkBrowserAppUpdate();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkBrowserAppUpdate();
+      }
+    });
+    window.addEventListener('focus', checkBrowserAppUpdate);
+    setInterval(checkBrowserAppUpdate, 3 * 60 * 1000);
+
+    // Dynamic cache-busting loader for flutter_bootstrap.js
+    const bootstrapScript = document.createElement('script');
+    bootstrapScript.src = 'flutter_bootstrap.js?v=' + Date.now();
+    bootstrapScript.async = true;
+    document.body.appendChild(bootstrapScript);
+  </script>
 </body>
 
 </html>

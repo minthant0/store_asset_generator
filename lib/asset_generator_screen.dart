@@ -18,7 +18,8 @@ class _AssetGeneratorScreenState extends State<AssetGeneratorScreen> {
   void initState() {
     super.initState();
     if (kIsWeb) {
-      registerWebPlatformView('asset-generator-view', 'asset_generator.html');
+      final cacheBuster = DateTime.now().millisecondsSinceEpoch;
+      registerWebPlatformView('asset-generator-view', 'asset_generator.html?v=$cacheBuster');
       _isLoading = false;
     } else {
       try {
