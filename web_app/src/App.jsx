@@ -79,6 +79,13 @@ const IconPalette = () => (
     <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
   </svg>
 );
+const BrandLogoIcon = () => (
+  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-900/30 ring-1 ring-white/20 flex-shrink-0">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-white drop-shadow">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  </div>
+);
 const IconLink = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
@@ -287,6 +294,7 @@ export default function App() {
   // Descriptions
   const [appName, setAppName] = useState('ZenFlow');
   const [shortDescMode, setShortDescMode] = useState('play-80');
+  const [detectedSummary, setDetectedSummary] = useState('');
   const [shortDescription, setShortDescription] = useState('Design stunning App Store & Google Play screenshots & mockups in seconds.');
   const [fullDescription, setFullDescription] = useState(
 `🚀 Transform Your App Store Presence in Minutes!
@@ -387,15 +395,31 @@ Tap Install and launch your next high-converting store listing today!`
     }
   };
 
-  const callGemini = async (prompt) => {
+  const callGemini = async (prompt, imageParts = []) => {
     const key = geminiApiKey.trim();
     if (!key) throw new Error('NO_KEY');
+    
+    const parts = [];
+    if (imageParts && imageParts.length > 0) {
+      for (const img of imageParts) {
+        if (img.data) {
+          parts.push({
+            inlineData: {
+              mimeType: img.mimeType || 'image/jpeg',
+              data: img.data
+            }
+          });
+        }
+      }
+    }
+    parts.push({ text: prompt });
+
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${key}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+        contents: [{ parts }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 3000 }
       })
     });
     const data = await res.json();
@@ -521,26 +545,108 @@ Return STRICT JSON ONLY, no markdown ticks, no commentary. Format:
     setIsGeneratingScreensAI(false);
   };
 
+  // Helper to extract all mockup images for AI vision analysis
+  const getMockupImagesForVision = () => {
+    const images = [];
+    try {
+      screens.forEach((scr, idx) => {
+        // 1. Render complete mockup scene canvas
+        const offCanvas = document.createElement('canvas');
+        const aspect = width / (height || 1);
+        const h = 480;
+        const w = Math.max(240, Math.round(h * aspect));
+        offCanvas.width = w;
+        offCanvas.height = h;
+        const ctx = offCanvas.getContext('2d');
+        if (ctx) {
+          renderScreenToCanvas(ctx, scr, w, h);
+          const dataUrl = offCanvas.toDataURL('image/jpeg', 0.82);
+          const base64 = dataUrl.split(',')[1];
+          if (base64) {
+            images.push({
+              mimeType: 'image/jpeg',
+              data: base64,
+              label: scr.label || `Mockup ${idx + 1}`
+            });
+          }
+        }
+
+        // 2. Also include uploaded raw app screenshot if available
+        if (scr.screenshot) {
+          try {
+            const rawCanvas = document.createElement('canvas');
+            const maxDim = 480;
+            let rw = scr.screenshot.width || maxDim;
+            let rh = scr.screenshot.height || maxDim;
+            if (rw > maxDim || rh > maxDim) {
+              if (rw > rh) {
+                rh = Math.round((rh * maxDim) / rw);
+                rw = maxDim;
+              } else {
+                rw = Math.round((rw * maxDim) / rh);
+                rh = maxDim;
+              }
+            }
+            rawCanvas.width = rw;
+            rawCanvas.height = rh;
+            const rctx = rawCanvas.getContext('2d');
+            if (rctx) {
+              rctx.drawImage(scr.screenshot, 0, 0, rw, rh);
+              const rData = rawCanvas.toDataURL('image/jpeg', 0.82).split(',')[1];
+              if (rData) {
+                images.push({
+                  mimeType: 'image/jpeg',
+                  data: rData,
+                  label: `UI Screenshot ${idx + 1}`
+                });
+              }
+            }
+          } catch (_) {}
+        }
+      });
+    } catch (e) {
+      console.warn('Could not export canvas images for AI vision:', e);
+    }
+    return images;
+  };
+
   const handleGenerateDescAI = async () => {
     setIsGeneratingDescAI(true);
     const name = appName.trim() || 'ZenFlow';
 
+    // 1. Detect all mockup images across all screens
+    const visionImages = getMockupImagesForVision();
+    const detectedCount = visionImages.length;
+    const screenDetails = screens.map((s, i) => `• Screen ${i + 1} [${s.label}]: Title="${s.title.replace(/\n/g, ' ')}", Subtitle="${s.subtitle}", Badge="${s.badge || 'None'}"`).join('\n');
+
     try {
       if (geminiApiKey.trim()) {
-        const prompt = `You are a premier App Store Optimization (ASO) writer.
-Write high-converting metadata for mobile app "${name}". Concept: ${aiAppPrompt}.
-Screens showcase: ${screens.map(s => s.title.replace(/\n/g, ' ')).join(', ')}.
+        const prompt = `You are an elite App Store Optimization (ASO) and conversion copywriter.
+I have attached ${detectedCount} mockup scenes and UI screenshot images from the mobile app series for "${name}".
+Optional user concept: ${aiAppPrompt || 'Mobile Application'}.
 
-Return STRICT JSON ONLY, no extra keys, no markdown ticks:
+Mockup Screen Metadata:
+${screenDetails}
+
+MANDATORY INSTRUCTIONS:
+1. DETECT & INSPECT: Carefully scan all attached mockup images. Identify the app's real purpose, core functionality, unique UI screens, workflows, and key visual features depicted.
+2. SYNTHESIZE: Formulate a compelling, benefit-driven narrative highlighting what is actually shown in the mockups.
+3. OUTPUT: Return STRICT JSON ONLY (no markdown blocks, no commentary):
 {
-  "shortPlay": "Punchy hook strictly under 80 characters",
-  "subApple": "Apple subtitle strictly under 30 characters",
-  "promoApple": "Apple promo text strictly under 170 characters",
-  "fullDescription": "Complete 4000-char max App Store / Play Store long description with emoji bulleted features, Why Users Love It, and Call to Action."
+  "detectedSummary": "Concise 1-2 sentence summary of what features and screens were detected in the mockup images",
+  "shortPlay": "High-converting Google Play short description, strictly 80 characters or fewer",
+  "subApple": "Punchy Apple subtitle, strictly 30 characters or fewer",
+  "promoApple": "Apple promotional text, strictly 170 characters or fewer",
+  "fullDescription": "Comprehensive App Store & Google Play long description (up to 3500 chars). Include an exciting intro hook, DETECTED KEY HIGHLIGHTS with emoji bullets, 'Why Users Love It' section, feature breakdown based on the mockups, and a strong Call to Action."
 }`;
-        const raw = await callGemini(prompt);
+
+        const raw = await callGemini(prompt, visionImages);
         const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleaned);
+
+        if (parsed.detectedSummary) {
+          setDetectedSummary(parsed.detectedSummary);
+        }
 
         if (parsed.shortPlay) {
           if (shortDescMode === 'play-80') setShortDescription(parsed.shortPlay.slice(0, 80));
@@ -549,33 +655,45 @@ Return STRICT JSON ONLY, no extra keys, no markdown ticks:
         }
         if (parsed.fullDescription) setFullDescription(parsed.fullDescription);
 
-        setAiToast('✨ Generated high-converting store description!');
-        setTimeout(() => setAiToast(''), 3500);
+        setAiToast(`✨ Detected ${detectedCount} mockup images & generated store descriptions!`);
+        setTimeout(() => setAiToast(''), 4000);
       } else {
+        // Smart offline synthesis based on all detected screen mockups
         await new Promise(r => setTimeout(r, 600));
-        setShortDescription(`Boost your daily performance with ${name} — fast, smart, and delightfully simple.`);
+        const featuresBullets = screens.map(s => `• ✨ ${s.title.replace(/\n/g, ' ')}: ${s.subtitle || 'Fast, reliable, and beautifully crafted.'}`).join('\n');
+        const firstTitle = screens[0]?.title.replace(/\n/g, ' ') || 'Smart Mobile Experience';
+        const offlineShort = `${name} — ${firstTitle}`.slice(0, 80);
+        
+        setDetectedSummary(`Detected ${screens.length} mockup screens showcasing: ${screens.map(s => s.title.replace(/\n/g, ' ')).join(', ')}.`);
+        setShortDescription(offlineShort);
         setFullDescription(
-`🚀 Dominate Your Goals with ${name}!
+`🚀 Welcome to ${name}!
 
-${name} is built from the ground up to give you unmatched speed, clarity, and control. Designed for high achievers who demand better results with less friction.
+${name} brings together everything you need into a seamless, high-performance experience. Designed for simplicity, power, and elegance.
 
-✨ UNBEATABLE HIGHLIGHTS:
-• ⚡ Lightning-Fast Performance: Zero lag, instant responsive design.
-• 🎯 Focused & Frictionless: Built with a modern, distraction-free aesthetic.
-• 🔒 Safe & 100% Private: Your confidential data stays on your device.
-• 📱 Cross-Platform Flow: Designed for modern iOS & Android devices.
+🔥 DETECTED HIGHLIGHTS ACROSS ALL SCREENS:
+${featuresBullets}
 
-💡 WHY USERS LOVE ${name.toUpperCase()}:
-"${name} completely redefined how I get things done every single day. A must-download!" - Tech Review
+💡 WHY YOU'LL LOVE ${name.toUpperCase()}:
+• ⚡ Ultra-Fast & Responsive: Engineered for fluid interactions.
+• 🎯 Focused & Clutter-Free: Built to keep you in flow.
+• 🔒 Safe & Private: Your data is always protected.
+• 📱 Optimized for Modern Devices: Looks stunning on both iOS and Android.
 
-🎉 WHAT'S NEW IN THIS RELEASE:
-- Added 3D perspective graphics and updated interface
-- Performance enhancements for ultra-smooth rendering
-
-Ready to experience a better way forward?
-Tap Install and unlock the power of ${name} today!`
+📥 DOWNLOAD ${name.toUpperCase()} NOW!
+Get started today and elevate your experience.`
         );
-        setAiToast('✨ Applied smart ASO copy. (Tip: Add Gemini Key in Settings for live AI)');
+
+        setAiToast(`✨ Detected ${screens.length} mockups & generated store copy!`);
+        setTimeout(() => setAiToast(''), 3500);
+      }
+    } catch (err) {
+      console.error(err);
+      setAiToast(`⚠️ Generation error: ${err.message}`);
+      setTimeout(() => setAiToast(''), 4500);
+    }
+    setIsGeneratingDescAI(false);
+  };
         setTimeout(() => setAiToast(''), 4000);
       }
     } catch (err) {
@@ -1631,7 +1749,7 @@ Tap Install and unlock the power of ${name} today!`
             {/* Header */}
             <div className="p-4 border-b border-gray-800 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img src="logo.jpg" alt="Asset Generator" className="w-9 h-9 rounded-xl shadow-lg shadow-black/30 ring-1 ring-white/10 flex-shrink-0" />
+                <BrandLogoIcon />
                 <div>
                   <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
                     <span>Store Mockup Studio</span>
@@ -2012,26 +2130,39 @@ Tap Install and unlock the power of ${name} today!`
           {activeTab === 'descriptions' && (
             <div className="space-y-4">
               
-              {/* AI Desc Card */}
-              <div className="bg-gray-900 border border-gray-700 rounded-xl p-3.5 space-y-2.5">
+              {/* AI Desc Card with Mockup Image Detection */}
+              <div className="bg-gray-900 border border-gray-700 rounded-xl p-3.5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <span className="p-1 bg-gray-700 text-gray-300 rounded-md">
+                    <span className="p-1 bg-indigo-600/30 text-indigo-400 rounded-md">
                       <IconSparkles />
                     </span>
-                    <span className="text-xs font-bold text-white">Gemini ASO Copywriting</span>
+                    <span className="text-xs font-bold text-white">Gemini Multimodal Vision ASO</span>
                   </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${geminiApiKey ? 'bg-blue-900/30 text-blue-300 border-blue-700' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
-                    {geminiApiKey ? 'Gemini AI' : 'Smart Demo'}
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${geminiApiKey ? 'bg-indigo-900/30 text-indigo-300 border-indigo-700' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
+                    {geminiApiKey ? 'Gemini Vision' : 'Smart Demo'}
                   </span>
                 </div>
+
+                {/* Mockup Detection Badge */}
+                <div className="flex items-center gap-2 p-2 bg-gray-950/70 rounded-lg border border-gray-800 text-[11px] text-gray-300">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></div>
+                  <span><b>Detected {screens.length} Mockup Scenes</b> ({screens.filter(s => s.screenshot).length} screenshots uploaded)</span>
+                </div>
+
+                {detectedSummary && (
+                  <div className="p-2.5 bg-indigo-950/40 border border-indigo-800/40 rounded-lg text-[11px] text-indigo-200">
+                    <p className="font-semibold text-indigo-300 mb-0.5">🔍 AI Detected Mockup Analysis:</p>
+                    <p>{detectedSummary}</p>
+                  </div>
+                )}
 
                 <button
                   onClick={handleGenerateDescAI}
                   disabled={isGeneratingDescAI}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 text-white rounded-lg text-xs font-semibold shadow-lg active:scale-98 cursor-pointer disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 text-white rounded-lg text-xs font-semibold shadow-lg active:scale-98 cursor-pointer disabled:opacity-50 transition-all"
                 >
-                  {isGeneratingDescAI ? <><IconSpinner /> Generating Store Descriptions...</> : <><IconSparkles /> Auto-Generate Store Copy with AI</>}
+                  {isGeneratingDescAI ? <><IconSpinner /> Analyzing Mockups & Writing Copy...</> : <><IconSparkles /> Detect Mockup Images & Generate Descriptions</>}
                 </button>
               </div>
 
@@ -2045,32 +2176,66 @@ Tap Install and unlock the power of ${name} today!`
                 />
               </div>
 
-              {/* Short Desc */}
-              <div className="bg-gray-800/40 border border-gray-800 rounded-xl p-3 space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-bold text-indigo-300 uppercase">Short Description (Play Store 80)</label>
+              {/* Short Desc Mode Selector */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-medium text-gray-400">Short Description Format</label>
+                <div className="flex bg-gray-900 p-1 rounded-lg border border-gray-800 text-xs">
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(shortDescription);
-                      setCopiedShort(true);
-                      setTimeout(() => setCopiedShort(false), 2000);
-                    }}
-                    className="text-[11px] bg-gray-800 hover:bg-gray-700 text-indigo-300 px-2 py-0.5 rounded border border-gray-700 cursor-pointer"
+                    type="button"
+                    onClick={() => setShortDescMode('play-80')}
+                    className={`flex-1 py-1 text-center rounded-md font-medium transition-colors cursor-pointer ${shortDescMode === 'play-80' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
                   >
-                    {copiedShort ? 'Copied!' : 'Copy'}
+                    Play Store (80)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShortDescMode('ios-30')}
+                    className={`flex-1 py-1 text-center rounded-md font-medium transition-colors cursor-pointer ${shortDescMode === 'ios-30' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                  >
+                    iOS Subtitle (30)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShortDescMode('ios-170')}
+                    className={`flex-1 py-1 text-center rounded-md font-medium transition-colors cursor-pointer ${shortDescMode === 'ios-170' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                  >
+                    iOS Promo (170)
                   </button>
                 </div>
-                <div className="flex justify-between text-[11px] font-mono text-gray-400">
-                  <span className={shortDescription.length > 80 ? 'text-red-400 font-bold' : ''}>{shortDescription.length} / 80 chars</span>
-                  <span>{80 - shortDescription.length} left</span>
-                </div>
-                <textarea
-                  rows={2}
-                  value={shortDescription}
-                  onChange={e => setShortDescription(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-xs text-white focus:outline-none resize-none"
-                />
               </div>
+
+              {/* Short Desc */}
+              {(() => {
+                const maxChars = shortDescMode === 'ios-30' ? 30 : shortDescMode === 'ios-170' ? 170 : 80;
+                const labelText = shortDescMode === 'ios-30' ? 'Apple Subtitle (30)' : shortDescMode === 'ios-170' ? 'Apple Promo Text (170)' : 'Short Description (Play Store 80)';
+                return (
+                  <div className="bg-gray-800/40 border border-gray-800 rounded-xl p-3 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs font-bold text-indigo-300 uppercase">{labelText}</label>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(shortDescription);
+                          setCopiedShort(true);
+                          setTimeout(() => setCopiedShort(false), 2000);
+                        }}
+                        className="text-[11px] bg-gray-800 hover:bg-gray-700 text-indigo-300 px-2 py-0.5 rounded border border-gray-700 cursor-pointer"
+                      >
+                        {copiedShort ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                    <div className="flex justify-between text-[11px] font-mono text-gray-400">
+                      <span className={shortDescription.length > maxChars ? 'text-red-400 font-bold' : ''}>{shortDescription.length} / {maxChars} chars</span>
+                      <span>{maxChars - shortDescription.length} left</span>
+                    </div>
+                    <textarea
+                      rows={2}
+                      value={shortDescription}
+                      onChange={e => setShortDescription(e.target.value)}
+                      className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-xs text-white focus:outline-none resize-none"
+                    />
+                  </div>
+                );
+              })()}
 
               {/* Full Desc */}
               <div className="bg-gray-800/40 border border-gray-800 rounded-xl p-3 space-y-2">
@@ -2086,6 +2251,10 @@ Tap Install and unlock the power of ${name} today!`
                   >
                     {copiedFull ? 'Copied!' : 'Copy'}
                   </button>
+                </div>
+                <div className="flex justify-between text-[11px] font-mono text-gray-400">
+                  <span className={fullDescription.length > 4000 ? 'text-red-400 font-bold' : ''}>{fullDescription.length} / 4000 chars</span>
+                  <span>{4000 - fullDescription.length} left</span>
                 </div>
                 <textarea
                   rows={8}
@@ -2192,7 +2361,7 @@ Tap Install and unlock the power of ${name} today!`
             {/* Logo Studio Sidebar Header */}
             <div className="p-4 border-b border-gray-800 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img src="logo.jpg" alt="Asset Generator" className="w-9 h-9 rounded-xl shadow-lg shadow-black/30 ring-1 ring-white/10 flex-shrink-0" />
+                <BrandLogoIcon />
                 <div>
                   <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
                     <span>Logo & Icon Studio</span>
@@ -2815,18 +2984,6 @@ Tap Install and unlock the power of ${name} today!`
                   className="shadow-2xl shadow-black rounded-lg ring-1 ring-white/10"
                   style={{ maxHeight: 'calc(100vh - 180px)', maxWidth: '100%', objectFit: 'contain' }}
                 />
-
-                {/* If no screenshot, elegant click-to-add button overlay */}
-                {!current.screenshot && (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute inset-0 m-auto w-44 h-11 flex items-center justify-center gap-2 bg-blue-600/90 hover:bg-blue-500 text-white rounded-xl shadow-2xl backdrop-blur font-medium text-xs border border-blue-400/30 pointer-events-auto cursor-pointer transition-transform hover:scale-105"
-                  >
-                    <IconImage />
-                    <span>Click to Add Image</span>
-                  </button>
-                )}
               </div>
 
               {/* Drag & Drop Visual Overlay */}
