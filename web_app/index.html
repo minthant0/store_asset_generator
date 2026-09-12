@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App Store & Play Store Asset Generator</title>
+  
+  <!-- Inter Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- JSZip for xcassets & Batch Mockup ZIP export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel Standalone for in-browser JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    * {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .custom-checkerboard {
+      background-color: #050505;
+      background-image: radial-gradient(#1f2937 1.5px, transparent 0);
+      background-size: 24px 24px;
+    }
+
+    @keyframes fadeInSlide {
+      from {
+        opacity: 0;
+        transform: translateX(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    .animate-in {
+      animation: fadeInSlide 0.2s ease-out forwards;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 9999px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+      background: #4b5563;
+    }
+
+    .scrollbar-none::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-none {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 overflow-hidden select-none">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- SVGs ---
+    const IconMonitor = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>
+      </svg>
+    );
+
+    const IconType = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/>
+      </svg>
+    );
+
+    const IconPalette = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+      </svg>
+    );
+
+    const IconSmartphone = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>
+      </svg>
+    );
+
+    const IconDownload = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>
+      </svg>
+    );
+
+    const IconUpload = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>
+      </svg>
+    );
+
+    const IconBox = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+      </svg>
+    );
+
+    const IconPlus = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    );
+
+    const IconTrash = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+      </svg>
+    );
+
+    const IconCopy = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="13" height="13" x="9" y="9" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+    );
+
+    const IconChevronLeft = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    );
+
+    const IconChevronRight = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    );
+
+    const loadJSZip = async () => {
+      if (window.JSZip) return window.JSZip;
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+        script.onload = () => resolve(window.JSZip);
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    };
+
+    const PRESETS = {
+      'play-feature': { name: 'Play Store Feature Graphic', width: 1024, height: 500, defaultLayout: 'split-right' },
+      'ios-6.5': { name: 'App Store (6.5" iPhone)', width: 1242, height: 2688, defaultLayout: 'stack' },
+      'ios-5.5': { name: 'App Store (5.5" iPhone)', width: 1242, height: 2208, defaultLayout: 'stack' },
+      'android-phone': { name: 'Play Store (Phone)', width: 1080, height: 1920, defaultLayout: 'stack' },
+    };
+
+    const COLOR_PALETTES = [
+      { name: 'Google Play Indigo', c1: '#4338ca', c2: '#0284c7', angle: 'horizontal' },
+      { name: 'Feature Sunset', c1: '#ea580c', c2: '#db2777', angle: 'diagonal' },
+      { name: 'Emerald Tech', c1: '#065f46', c2: '#0d9488', angle: 'diagonal' },
+      { name: 'Dark Cyber', c1: '#0f172a', c2: '#1e1b4b', angle: 'vertical' },
+      { name: 'Neon Violet', c1: '#581c87', c2: '#2563eb', angle: 'horizontal' },
+      { name: 'Crimson Rose', c1: '#881337', c2: '#e11d48', angle: 'diagonal' },
+      { name: 'Pure Dark', c1: '#18181b', c2: '#09090b', angle: 'vertical' },
+    ];
+
+    const IOS_ICONS = [
+      { size: 20, scale: 2, idiom: "iphone" },
+      { size: 20, scale: 3, idiom: "iphone" },
+      { size: 29, scale: 2, idiom: "iphone" },
+      { size: 29, scale: 3, idiom: "iphone" },
+      { size: 40, scale: 2, idiom: "iphone" },
+      { size: 40, scale: 3, idiom: "iphone" },
+      { size: 60, scale: 2, idiom: "iphone" },
+      { size: 60, scale: 3, idiom: "iphone" },
+      { size: 20, scale: 1, idiom: "ipad" },
+      { size: 20, scale: 2, idiom: "ipad" },
+      { size: 29, scale: 1, idiom: "ipad" },
+      { size: 29, scale: 2, idiom: "ipad" },
+      { size: 40, scale: 1, idiom: "ipad" },
+      { size: 40, scale: 2, idiom: "ipad" },
+      { size: 76, scale: 1, idiom: "ipad" },
+      { size: 76, scale: 2, idiom: "ipad" },
+      { size: 83.5, scale: 2, idiom: "ipad" },
+      { size: 1024, scale: 1, idiom: "ios-marketing" }
+    ];
+
+    const ICON_PREVIEW_PRESETS = [
+      { id: '1024', name: 'App Store Marketing', size: 1024, display: 280, label: '1024 × 1024 pt' },
+      { id: '180', name: 'iPhone Home Screen (@3x)', size: 180, display: 180, label: '180 × 180 px' },
+      { id: '120', name: 'iPhone Home Screen (@2x)', size: 120, display: 120, label: '120 × 120 px' },
+      { id: '87', name: 'Settings Icon (@3x)', size: 87, display: 87, label: '87 × 87 px' },
+      { id: '60', name: 'Notification (@3x)', size: 60, display: 60, label: '60 × 60 px' },
+      { id: 'grid', name: 'All Sizes Grid View', size: 'grid', display: 0, label: 'Multi-resolution' }
+    ];
+
+    const INITIAL_SCREENS = [
+      {
+        id: 'screen-1',
+        label: '1. Welcome',
+        title: 'Your Amazing\nApp Name',
+        subtitle: 'Showcase your core value proposition\nand hook users immediately.',
+        titleColor: '#ffffff',
+        titleSize: 100,
+        subtitleColor: '#e0e7ff',
+        subtitleSize: 50,
+        layout: 'stack',
+        bgType: 'gradient',
+        bgColor1: '#4338ca',
+        bgColor2: '#0284c7',
+        bgAngle: 'diagonal',
+        deviceType: 'iphone',
+        deviceScale: 1.0,
+        yOffset: 0,
+        screenshot: null,
+        screenshot2: null
+      },
+      {
+        id: 'screen-2',
+        label: '2. Features',
+        title: 'Highlight Key\nFeatures',
+        subtitle: 'Explain how your app solves\nproblems with beautiful visuals.',
+        titleColor: '#ffffff',
+        titleSize: 100,
+        subtitleColor: '#fed7aa',
+        subtitleSize: 50,
+        layout: 'stack',
+        bgType: 'gradient',
+        bgColor1: '#ea580c',
+        bgColor2: '#db2777',
+        bgAngle: 'diagonal',
+        deviceType: 'iphone',
+        deviceScale: 1.0,
+        yOffset: 0,
+        screenshot: null,
+        screenshot2: null
+      },
+      {
+        id: 'screen-3',
+        label: '3. Dashboard',
+        title: 'Track Your\nProgress',
+        subtitle: 'Keep users engaged with clear\nanalytics and data views.',
+        titleColor: '#ffffff',
+        titleSize: 100,
+        subtitleColor: '#ccfbf1',
+        subtitleSize: 50,
+        layout: 'stack',
+        bgType: 'gradient',
+        bgColor1: '#065f46',
+        bgColor2: '#0d9488',
+        bgAngle: 'diagonal',
+        deviceType: 'iphone',
+        deviceScale: 1.0,
+        yOffset: 0,
+        screenshot: null,
+        screenshot2: null
+      }
+    ];
+
+    const NAVIGATION_TABS = [
+      { id: 'size', Icon: IconMonitor, label: 'Layout' },
+      { id: 'text', Icon: IconType, label: 'Text' },
+      { id: 'mockup', Icon: IconSmartphone, label: 'Mockup' },
+      { id: 'bg', Icon: IconPalette, label: 'Background' },
+      { id: 'appicon', Icon: IconBox, label: 'iOS Icon' }
+    ];
+
+    function App() {
+      const canvasRef = useRef(null);
+
+      // --- State ---
+      const [screens, setScreens] = useState(INITIAL_SCREENS);
+      const [currentScreenIndex, setCurrentScreenIndex] = useState(0);
+      const [activeTab, setActiveTab] = useState('bg');
+      const [presetKey, setPresetKey] = useState('play-feature'); // Default to feature graphic for immediate view
+      
+      const [width, setWidth] = useState(PRESETS['play-feature'].width);
+      const [height, setHeight] = useState(PRESETS['play-feature'].height);
+
+      // Current Screen Proxy
+      const current = screens[currentScreenIndex] || screens[0];
+
+      // Update current screen helper
+      const updateCurrentScreen = (updates) => {
+        setScreens(prev => {
+          const next = [...prev];
+          next[currentScreenIndex] = { ...next[currentScreenIndex], ...updates };
+          return next;
+        });
+      };
+
+      // App Icon Generator State
+      const [appIcon, setAppIcon] = useState(null);
+      const [isGeneratingIcon, setIsGeneratingIcon] = useState(false);
+      const [iconPreset, setIconPreset] = useState('1024');
+      const [iconPreviewSize, setIconPreviewSize] = useState(280);
+      const [isExportingAll, setIsExportingAll] = useState(false);
+
+      // Preset Change Handler
+      useEffect(() => {
+        const p = PRESETS[presetKey];
+        setWidth(p.width);
+        setHeight(p.height);
+        
+        // Auto adapt default layout & font scale when switching between feature graphic and phone
+        if (presetKey === 'play-feature') {
+          updateCurrentScreen({
+            layout: current.layout === 'stack' ? 'split-right' : current.layout,
+            titleSize: Math.min(current.titleSize, 64),
+            subtitleSize: Math.min(current.subtitleSize, 30),
+            deviceScale: 1.1,
+            yOffset: 30
+          });
+        } else {
+          updateCurrentScreen({
+            titleSize: Math.max(current.titleSize, 90),
+            subtitleSize: Math.max(current.subtitleSize, 46),
+            deviceScale: 1.0,
+            yOffset: 0
+          });
+        }
+      }, [presetKey]);
+
+      // Add New Mockup Screen
+      const handleAddMockup = () => {
+        const newId = `screen-${Date.now()}`;
+        const newScreenNum = screens.length + 1;
+        const palette = COLOR_PALETTES[(newScreenNum - 1) % COLOR_PALETTES.length];
+        
+        const newScreen = {
+          id: newId,
+          label: `${newScreenNum}. Feature ${newScreenNum}`,
+          title: `Highlight Screen #${newScreenNum}`,
+          subtitle: 'Describe the feature and what makes it special.',
+          titleColor: '#ffffff',
+          titleSize: presetKey === 'play-feature' ? 60 : 100,
+          subtitleColor: '#e0e7ff',
+          subtitleSize: presetKey === 'play-feature' ? 30 : 50,
+          layout: presetKey === 'play-feature' ? 'split-right' : 'stack',
+          bgType: 'gradient',
+          bgColor1: palette.c1,
+          bgColor2: palette.c2,
+          bgAngle: palette.angle,
+          deviceType: current.deviceType || 'iphone',
+          deviceScale: presetKey === 'play-feature' ? 1.1 : 1.0,
+          yOffset: presetKey === 'play-feature' ? 30 : 0,
+          screenshot: null,
+          screenshot2: null
+        };
+        
+        setScreens(prev => [...prev, newScreen]);
+        setCurrentScreenIndex(screens.length);
+      };
+
+      // Duplicate Current Screen
+      const handleDuplicateScreen = () => {
+        const duplicated = {
+          ...current,
+          id: `screen-${Date.now()}`,
+          label: `${current.label} (Copy)`
+        };
+        const next = [...screens];
+        next.splice(currentScreenIndex + 1, 0, duplicated);
+        setScreens(next);
+        setCurrentScreenIndex(currentScreenIndex + 1);
+      };
+
+      // Delete Current Screen
+      const handleDeleteScreen = () => {
+        if (screens.length <= 1) return;
+        const next = screens.filter((_, idx) => idx !== currentScreenIndex);
+        setScreens(next);
+        setCurrentScreenIndex(Math.max(0, currentScreenIndex - 1));
+      };
+
+      // Navigate Next / Previous
+      const handleNextMockup = () => {
+        if (currentScreenIndex < screens.length - 1) {
+          setCurrentScreenIndex(currentScreenIndex + 1);
+        } else {
+          // If at the end, offer adding next mockup screen!
+          handleAddMockup();
+        }
+      };
+
+      const handlePrevMockup = () => {
+        if (currentScreenIndex > 0) {
+          setCurrentScreenIndex(currentScreenIndex - 1);
+        }
+      };
+
+      // Upload Handler for primary screenshot
+      const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => updateCurrentScreen({ screenshot: img });
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      };
+
+      // Upload Handler for secondary screenshot (for dual mockups)
+      const handleImageUpload2 = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => updateCurrentScreen({ screenshot2: img });
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const handleIconUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => setAppIcon(img);
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const generateSampleIcon = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024; canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 1024, 1024);
+        grad.addColorStop(0, '#4f46e5'); grad.addColorStop(1, '#0ea5e9');
+        ctx.fillStyle = grad; ctx.fillRect(0, 0, 1024, 1024);
+
+        ctx.fillStyle = '#ffffff';
+        const cx = 512, cy = 512, radius = 300;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const angle = (Math.PI / 3) * i - Math.PI / 2;
+          const x = cx + radius * Math.cos(angle);
+          const y = cy + radius * Math.sin(angle);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath(); ctx.fill();
+
+        ctx.fillStyle = '#1e1b4b'; ctx.beginPath();
+        ctx.arc(cx, cy, 120, 0, Math.PI * 2); ctx.fill();
+
+        const img = new Image();
+        img.onload = () => setAppIcon(img);
+        img.src = canvas.toDataURL('image/png');
+      };
+
+      // --- Render Canvas Function for given screen state ---
+      const renderScreenToCanvas = (ctx, scr, targetW, targetH) => {
+        ctx.clearRect(0, 0, targetW, targetH);
+
+        // 1. Draw Background
+        if (scr.bgType === 'solid') {
+          ctx.fillStyle = scr.bgColor1;
+          ctx.fillRect(0, 0, targetW, targetH);
+        } else if (scr.bgType === 'radial') {
+          const radial = ctx.createRadialGradient(targetW * 0.5, targetH * 0.5, 50, targetW * 0.5, targetH * 0.5, targetW * 0.8);
+          radial.addColorStop(0, scr.bgColor1);
+          radial.addColorStop(1, scr.bgColor2);
+          ctx.fillStyle = radial;
+          ctx.fillRect(0, 0, targetW, targetH);
+        } else {
+          // Linear Gradient with customizable angle
+          let grad;
+          if (scr.bgAngle === 'horizontal') {
+            grad = ctx.createLinearGradient(0, 0, targetW, 0);
+          } else if (scr.bgAngle === 'diagonal') {
+            grad = ctx.createLinearGradient(0, 0, targetW, targetH);
+          } else {
+            // vertical (default)
+            grad = ctx.createLinearGradient(0, 0, 0, targetH);
+          }
+          grad.addColorStop(0, scr.bgColor1);
+          grad.addColorStop(1, scr.bgColor2);
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, targetW, targetH);
+        }
+
+        // Feature Graphic Subtle Accent Glow / Lighting
+        const glowGrad = ctx.createRadialGradient(targetW * 0.75, targetH * 0.3, 20, targetW * 0.75, targetH * 0.3, targetW * 0.6);
+        glowGrad.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
+        glowGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = glowGrad;
+        ctx.fillRect(0, 0, targetW, targetH);
+
+        // Layout Calculations
+        let textX, textY, deviceX, deviceY, baseDeviceW, textAlign;
+
+        if (scr.layout === 'stack') {
+          textX = targetW / 2;
+          textY = targetH * 0.11;
+          textAlign = 'center';
+          deviceX = targetW / 2;
+          deviceY = targetH * 0.65 + (scr.yOffset * 3);
+          baseDeviceW = targetW * 0.75 * scr.deviceScale;
+        } else if (scr.layout === 'split-left') {
+          textX = targetW * 0.08;
+          textY = targetH / 2 - (scr.titleSize * 1.1);
+          textAlign = 'left';
+          deviceX = targetW * 0.72;
+          deviceY = targetH / 2 + (scr.yOffset * 2);
+          baseDeviceW = targetH * 0.58 * scr.deviceScale;
+        } else if (scr.layout === 'split-right') {
+          textX = targetW * 0.08;
+          textY = targetH / 2 - (scr.titleSize * 1.1);
+          textAlign = 'left';
+          deviceX = targetW * 0.76;
+          deviceY = targetH / 2 + (scr.yOffset * 2);
+          baseDeviceW = targetH * 0.60 * scr.deviceScale;
+        } else if (scr.layout === 'dual') {
+          // Dual Mockups side-by-side (Ideal for Feature Graphic!)
+          textX = targetW * 0.08;
+          textY = targetH / 2 - (scr.titleSize * 1.1);
+          textAlign = 'left';
+          deviceX = targetW * 0.65;
+          deviceY = targetH / 2 + (scr.yOffset * 2);
+          baseDeviceW = targetH * 0.52 * scr.deviceScale;
+        }
+
+        // 2. Draw Text
+        const drawText = (text, x, y, size, color, isBold) => {
+          if (!text) return 0;
+          ctx.font = `${isBold ? '800' : '500'} ${size}px 'Inter', sans-serif`;
+          ctx.fillStyle = color;
+          ctx.textAlign = textAlign;
+          ctx.textBaseline = 'top';
+          const lines = text.split('\n');
+          lines.forEach((line, i) => {
+            ctx.fillText(line, x, y + (i * size * 1.25));
+          });
+          return lines.length * size * 1.25;
+        };
+
+        const titleHeightTaken = drawText(scr.title, textX, textY, scr.titleSize, scr.titleColor, true);
+        drawText(scr.subtitle, textX, textY + titleHeightTaken + (scr.titleSize * 0.25), scr.subtitleSize, scr.subtitleColor, false);
+
+        // Fallback for roundRect
+        if (!ctx.roundRect) {
+          ctx.roundRect = function(x, y, w, h, r) {
+            if (typeof r === 'undefined') { r = 0; }
+            this.beginPath(); this.moveTo(x + r, y); this.lineTo(x + w - r, y); this.quadraticCurveTo(x + w, y, x + w, y + r); this.lineTo(x + w, y + h - r); this.quadraticCurveTo(x + w, y + h, x + w - r, y + h); this.lineTo(x + r, y + h); this.quadraticCurveTo(x, y + h, x, y + h - r); this.lineTo(x, y + r); this.quadraticCurveTo(x, y, x + r, y); this.closePath();
+            return this;
+          };
+        }
+
+        // Single Device Draw Routine
+        const renderSingleDevice = (centerX, centerY, devW, shotImg, angleDeg = 0) => {
+          ctx.save();
+          ctx.translate(centerX, centerY);
+          if (angleDeg !== 0) {
+            ctx.rotate((angleDeg * Math.PI) / 180);
+          }
+
+          let devH, radius, bezel;
+          if (scr.deviceType === 'none') {
+            devW = devW * 1.08;
+            devH = devW * 2.16;
+            if (shotImg) {
+              const aspect = shotImg.height / shotImg.width;
+              devH = devW * aspect;
+            }
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 40;
+            ctx.shadowOffsetY = 20;
+            ctx.beginPath();
+            ctx.roundRect(-devW/2, -devH/2, devW, devH, devW * 0.05);
+            ctx.clip();
+            if (shotImg) {
+              ctx.drawImage(shotImg, -devW/2, -devH/2, devW, devH);
+            } else {
+              ctx.fillStyle = '#1e1b4b'; ctx.fill();
+              ctx.fillStyle = '#818cf8'; ctx.textAlign = 'center'; ctx.font = `${devW * 0.07}px sans-serif`;
+              ctx.fillText('Upload Screenshot', 0, 0);
+            }
+            ctx.restore();
+            return;
+          }
+
+          if (scr.deviceType === 'iphone') {
+            devH = devW * 2.16;
+            radius = devW * 0.12;
+            bezel = devW * 0.04;
+            
+            ctx.shadowColor = 'rgba(0,0,0,0.55)';
+            ctx.shadowBlur = targetW * 0.04;
+            ctx.shadowOffsetY = targetW * 0.02;
+
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.roundRect(-devW/2, -devH/2, devW, devH, radius);
+            ctx.fill();
+            ctx.shadowColor = 'transparent';
+
+            // Outer ring
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            const screenR = radius * 0.8;
+            ctx.roundRect(-devW/2 + bezel, -devH/2 + bezel, devW - bezel*2, devH - bezel*2, screenR);
+            ctx.save();
+            ctx.clip();
+
+            if (shotImg) {
+              const screenW = devW - bezel*2;
+              const screenH = devH - bezel*2;
+              const imgAspect = shotImg.width / shotImg.height;
+              const screenAspect = screenW / screenH;
+              let drawW = screenW, drawH = screenH, drawX = -screenW/2, drawY = -screenH/2;
+              if (imgAspect > screenAspect) {
+                drawH = screenH; drawW = screenH * imgAspect; drawX = -drawW/2;
+              } else {
+                drawW = screenW; drawH = screenW / imgAspect; drawY = -drawH/2;
+              }
+              ctx.drawImage(shotImg, drawX, drawY, drawW, drawH);
+            } else {
+              ctx.fillStyle = '#18181b'; ctx.fill();
+              ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+              ctx.font = `${devW * 0.065}px sans-serif`;
+              ctx.fillText('Upload Mockup', 0, 0);
+            }
+            ctx.restore();
+
+            // Dynamic Island
+            ctx.fillStyle = '#020617';
+            ctx.beginPath();
+            ctx.roundRect(-devW * 0.14, -devH/2 + bezel + devW * 0.02, devW * 0.28, devW * 0.075, devW * 0.038);
+            ctx.fill();
+
+          } else if (scr.deviceType === 'android') {
+            devH = devW * 2.22;
+            radius = devW * 0.08;
+            bezel = devW * 0.025;
+
+            ctx.shadowColor = 'rgba(0,0,0,0.55)';
+            ctx.shadowBlur = targetW * 0.04;
+            ctx.shadowOffsetY = targetW * 0.02;
+
+            ctx.fillStyle = '#18181b';
+            ctx.beginPath();
+            ctx.roundRect(-devW/2, -devH/2, devW, devH, radius);
+            ctx.fill();
+            ctx.shadowColor = 'transparent';
+
+            ctx.beginPath();
+            const screenR = radius * 0.5;
+            ctx.roundRect(-devW/2 + bezel, -devH/2 + bezel, devW - bezel*2, devH - bezel*2, screenR);
+            ctx.save();
+            ctx.clip();
+            if (shotImg) {
+              const screenW = devW - bezel*2; const screenH = devH - bezel*2;
+              const imgAspect = shotImg.width / shotImg.height; const screenAspect = screenW / screenH;
+              let drawW = screenW, drawH = screenH, drawX = -screenW/2, drawY = -screenH/2;
+              if (imgAspect > screenAspect) { drawH = screenH; drawW = screenH * imgAspect; drawX = -drawW/2; } 
+              else { drawW = screenW; drawH = screenW / imgAspect; drawY = -drawH/2; }
+              ctx.drawImage(shotImg, drawX, drawY, drawW, drawH);
+            } else {
+              ctx.fillStyle = '#18181b'; ctx.fill();
+              ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+              ctx.font = `${devW * 0.065}px sans-serif`;
+              ctx.fillText('Upload Mockup', 0, 0);
+            }
+            ctx.restore();
+
+            // Hole Punch camera
+            ctx.fillStyle = '#09090b';
+            ctx.beginPath();
+            ctx.arc(0, -devH/2 + bezel + devW*0.05, devW*0.022, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.restore();
+        };
+
+        // 3. Draw Device Mockups
+        if (scr.layout === 'dual') {
+          // Secondary device behind & slightly to the right
+          const secondImg = scr.screenshot2 || scr.screenshot;
+          renderSingleDevice(deviceX + baseDeviceW * 0.42, deviceY + baseDeviceW * 0.1, baseDeviceW * 0.92, secondImg, 6);
+          // Primary device front & slightly tilted
+          renderSingleDevice(deviceX - baseDeviceW * 0.1, deviceY, baseDeviceW, scr.screenshot, -4);
+        } else {
+          renderSingleDevice(deviceX, deviceY, baseDeviceW, scr.screenshot, 0);
+        }
+      };
+
+      // Draw to Canvas on state change
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        renderScreenToCanvas(ctx, current, width, height);
+      }, [current, width, height]);
+
+      // Single Export
+      const handleDownloadCurrent = () => {
+        if (!canvasRef.current) return;
+        const dataUrl = canvasRef.current.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `${current.label.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-${width}x${height}.png`;
+        link.href = dataUrl;
+        link.click();
+      };
+
+      // Batch Export All Screens as ZIP
+      const handleExportAllScreens = async () => {
+        setIsExportingAll(true);
+        try {
+          const JSZip = await loadJSZip();
+          const zip = new JSZip();
+          const folder = zip.folder("AppStore_Screenshots");
+
+          for (let i = 0; i < screens.length; i++) {
+            const scr = screens[i];
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = width;
+            offCanvas.height = height;
+            const offCtx = offCanvas.getContext('2d');
+            renderScreenToCanvas(offCtx, scr, width, height);
+            
+            const dataUrl = offCanvas.toDataURL('image/png');
+            const base64Data = dataUrl.split(',')[1];
+            const fileName = `screen-${i + 1}-${scr.label.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
+            folder.file(fileName, base64Data, { base64: true });
+          }
+
+          const content = await zip.generateAsync({ type: "blob" });
+          const url = URL.createObjectURL(content);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `store-mockups-${presetKey}-${screens.length}screens.zip`;
+          link.click();
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          console.error("Batch export error:", err);
+        }
+        setIsExportingAll(false);
+      };
+
+      // Xcode Assets.xcassets export
+      const generateXCAssets = async () => {
+        if (!appIcon) return;
+        setIsGeneratingIcon(true);
+        try {
+          const JSZip = await loadJSZip();
+          const zip = new JSZip();
+          const appiconset = zip.folder("Assets.xcassets/AppIcon.appiconset");
+          const contents = { images: [], info: { version: 1, author: "xcode" } };
+
+          const resizeImage = (img, w, h) => {
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            return c.toDataURL('image/png').split(',')[1];
+          };
+
+          for (const icon of IOS_ICONS) {
+            const filename = `icon-${icon.size}x${icon.size}@${icon.scale}x.png`;
+            const pixelSize = icon.size * icon.scale;
+            const base64Data = resizeImage(appIcon, pixelSize, pixelSize);
+            appiconset.file(filename, base64Data, { base64: true });
+            contents.images.push({
+              size: `${icon.size}x${icon.size}`,
+              idiom: icon.idiom,
+              filename: filename,
+              scale: `${icon.scale}x`
+            });
+          }
+          appiconset.file("Contents.json", JSON.stringify(contents, null, 2));
+
+          const content = await zip.generateAsync({ type: "blob" });
+          const url = URL.createObjectURL(content);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = "Assets.xcassets.zip";
+          link.click();
+          URL.revokeObjectURL(url);
+        } catch (e) {
+          console.error("Error generating xcassets:", e);
+        }
+        setIsGeneratingIcon(false);
+      };
+
+      return (
+        <div className="flex h-screen w-full bg-gray-950 text-gray-100 font-sans overflow-hidden">
+          
+          {/* Left Sidebar */}
+          <div className="w-80 md:w-96 flex-shrink-0 bg-gray-900 border-r border-gray-800 flex flex-col h-full z-10 shadow-2xl">
+            
+            {/* Header */}
+            <div className="p-4 md:p-5 border-b border-gray-800 flex items-center justify-between">
+              <div>
+                <h1 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                  <span>Store Mockup Studio</span>
+                  <span className="text-[10px] bg-indigo-900/60 text-indigo-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-500/40">Pro</span>
+                </h1>
+                <p className="text-xs text-gray-400 mt-0.5">Feature Graphic & Screen Series</p>
+              </div>
+              <div className="flex gap-2">
+                {activeTab !== 'appicon' && (
+                  <button 
+                    onClick={handleDownloadCurrent}
+                    title="Download Current Screen"
+                    className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shadow-lg shadow-indigo-900/20 active:scale-95"
+                  >
+                    <IconDownload /> PNG
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Mockup Screen Carousel Strip */}
+            {activeTab !== 'appicon' && (
+              <div className="bg-gray-950/80 px-4 py-3 border-b border-gray-800/80">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Mockup Screens ({screens.length})</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={handleDuplicateScreen}
+                      title="Duplicate Screen"
+                      className="p-1 hover:bg-gray-800 text-gray-400 hover:text-gray-200 rounded transition-colors"
+                    >
+                      <IconCopy />
+                    </button>
+                    {screens.length > 1 && (
+                      <button
+                        onClick={handleDeleteScreen}
+                        title="Delete Screen"
+                        className="p-1 hover:bg-red-900/40 text-red-400 hover:text-red-300 rounded transition-colors"
+                      >
+                        <IconTrash />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  {screens.map((scr, idx) => (
+                    <button
+                      key={scr.id}
+                      onClick={() => setCurrentScreenIndex(idx)}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 ${currentScreenIndex === idx ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200 shadow-md ring-1 ring-indigo-500/50' : 'bg-gray-800/60 border-gray-700/80 text-gray-400 hover:text-gray-200'}`}
+                    >
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: scr.bgColor1 }}></span>
+                      <span>{scr.label}</span>
+                    </button>
+                  ))}
+                  
+                  {/* + Mockup Button */}
+                  <button
+                    onClick={handleAddMockup}
+                    className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500 shadow-md shadow-indigo-900/30 transition-transform active:scale-95 cursor-pointer"
+                  >
+                    <IconPlus /> Add Mockup
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Tabs */}
+            <div className="flex border-b border-gray-800 overflow-x-auto scrollbar-none bg-gray-900/50">
+              {NAVIGATION_TABS.map(tab => {
+                const IconComponent = tab.Icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-1 text-[11px] font-medium border-b-2 transition-colors ${activeTab === tab.id ? 'border-indigo-500 text-indigo-400 bg-gray-800/50' : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-gray-800/30'}`}
+                  >
+                    <IconComponent />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tab Content Areas */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-thin">
+              
+              {/* Background & Feature Graphic Color Tab */}
+              {activeTab === 'bg' && (
+                <div className="space-y-5 animate-in">
+                  
+                  {/* Preset Banner Reminder */}
+                  {presetKey === 'play-feature' && (
+                    <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-lg p-3 text-xs text-emerald-300 flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold">Play Store Feature Graphic (1024 × 500)</p>
+                        <p className="text-[11px] opacity-80 mt-0.5">Control vibrant banner background colors & lighting.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Curated Color Palettes */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">Palette Presets</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {COLOR_PALETTES.map((pal, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => updateCurrentScreen({ bgColor1: pal.c1, bgColor2: pal.c2, bgAngle: pal.angle, bgType: 'gradient' })}
+                          className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/60 border border-gray-700/60 hover:border-gray-500 text-left transition-colors group"
+                        >
+                          <div 
+                            className="w-6 h-6 rounded-md shadow-inner flex-shrink-0 border border-white/10" 
+                            style={{ background: `linear-gradient(135deg, ${pal.c1}, ${pal.c2})` }}
+                          />
+                          <span className="text-[11px] text-gray-300 group-hover:text-white truncate font-medium">{pal.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Background Type */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">Background Type</label>
+                    <div className="flex bg-gray-800 rounded-lg p-1">
+                      {['gradient', 'solid', 'radial'].map(type => (
+                        <button
+                          key={type}
+                          onClick={() => updateCurrentScreen({ bgType: type })}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-colors ${current.bgType === type ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Gradient Direction Angle */}
+                  {current.bgType === 'gradient' && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-400 mb-2">Gradient Flow Direction</label>
+                      <div className="flex bg-gray-800 rounded-lg p-1">
+                        {[
+                          { id: 'horizontal', label: 'Left → Right' },
+                          { id: 'vertical', label: 'Top → Down' },
+                          { id: 'diagonal', label: 'Diagonal 45°' },
+                        ].map(dir => (
+                          <button
+                            key={dir.id}
+                            onClick={() => updateCurrentScreen({ bgAngle: dir.id })}
+                            className={`flex-1 py-1.5 text-[11px] font-medium rounded-md transition-colors ${current.bgAngle === dir.id ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                          >
+                            {dir.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Custom Color Pickers with Hex Input */}
+                  <div className="space-y-3 bg-gray-800/40 p-3.5 rounded-xl border border-gray-800">
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1.5 font-medium">Primary / Start Color</label>
+                      <div className="flex gap-2.5 items-center">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-600 inline-block relative flex-shrink-0 shadow-inner">
+                          <input 
+                            type="color" 
+                            value={current.bgColor1} 
+                            onChange={e => updateCurrentScreen({ bgColor1: e.target.value })} 
+                            className="absolute -top-3 -left-3 w-16 h-16 cursor-pointer" 
+                          />
+                        </div>
+                        <input 
+                          type="text" 
+                          value={current.bgColor1} 
+                          onChange={e => updateCurrentScreen({ bgColor1: e.target.value })} 
+                          className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white uppercase font-mono tracking-wider" 
+                        />
+                      </div>
+                    </div>
+
+                    {current.bgType !== 'solid' && (
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1.5 font-medium">Secondary / End Color</label>
+                        <div className="flex gap-2.5 items-center">
+                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-600 inline-block relative flex-shrink-0 shadow-inner">
+                            <input 
+                              type="color" 
+                              value={current.bgColor2} 
+                              onChange={e => updateCurrentScreen({ bgColor2: e.target.value })} 
+                              className="absolute -top-3 -left-3 w-16 h-16 cursor-pointer" 
+                            />
+                          </div>
+                          <input 
+                            type="text" 
+                            value={current.bgColor2} 
+                            onChange={e => updateCurrentScreen({ bgColor2: e.target.value })} 
+                            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white uppercase font-mono tracking-wider" 
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              )}
+
+              {/* Layout Tab */}
+              {activeTab === 'size' && (
+                <div className="space-y-5 animate-in">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">Preset Dimensions</label>
+                    <div className="space-y-2">
+                      {Object.entries(PRESETS).map(([key, p]) => (
+                        <button
+                          key={key}
+                          onClick={() => setPresetKey(key)}
+                          className={`w-full text-left px-3.5 py-2.5 rounded-lg border text-sm transition-all ${presetKey === key ? 'bg-indigo-900/30 border-indigo-500 text-indigo-200 shadow-md ring-1 ring-indigo-500/50 font-semibold' : 'bg-gray-800/80 border-gray-700 text-gray-300 hover:border-gray-500'}`}
+                        >
+                          <div>{p.name}</div>
+                          <div className="text-[11px] opacity-70 font-mono mt-0.5">{p.width} × {p.height} px</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">Layout Composition</label>
+                    <select 
+                      value={current.layout} 
+                      onChange={(e) => updateCurrentScreen({ layout: e.target.value })}
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+                    >
+                      <option value="split-right">Split - Text Left, Mockup Right (Recommended for Feature Graphic)</option>
+                      <option value="split-left">Split - Text Right, Mockup Left</option>
+                      <option value="dual">Dual Mockups (Side-by-Side 2 Phones)</option>
+                      <option value="stack">Vertical Stack (Standard for Portrait)</option>
+                    </select>
+                  </div>
+
+                  {/* Batch Export All Screens as Zip */}
+                  <div className="pt-2">
+                    <button
+                      onClick={handleExportAllScreens}
+                      disabled={isExportingAll}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-lg shadow-emerald-950/40 transition-colors"
+                    >
+                      <IconDownload /> {isExportingAll ? 'Packing ZIP...' : `Export All ${screens.length} Mockups (ZIP)`}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Text Tab */}
+              {activeTab === 'text' && (
+                <div className="space-y-4 animate-in">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Screen Label / Tag</label>
+                    <input 
+                      type="text" 
+                      value={current.label} 
+                      onChange={e => updateCurrentScreen({ label: e.target.value })}
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-end mb-1.5">
+                      <label className="block text-xs font-medium text-gray-400">Headline Title</label>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-gray-500">Size</span>
+                        <input type="number" value={current.titleSize} onChange={e => updateCurrentScreen({ titleSize: Number(e.target.value) })} className="w-14 bg-gray-800 border border-gray-700 rounded px-1.5 py-0.5 text-xs text-white text-center" />
+                        <div className="w-5 h-5 rounded overflow-hidden border border-gray-600 inline-block relative">
+                          <input type="color" value={current.titleColor} onChange={e => updateCurrentScreen({ titleColor: e.target.value })} className="absolute -top-2 -left-2 w-8 h-8 cursor-pointer" />
+                        </div>
+                      </div>
+                    </div>
+                    <textarea 
+                      value={current.title} 
+                      onChange={e => updateCurrentScreen({ title: e.target.value })}
+                      rows={2}
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-end mb-1.5">
+                      <label className="block text-xs font-medium text-gray-400">Subtitle Description</label>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-gray-500">Size</span>
+                        <input type="number" value={current.subtitleSize} onChange={e => updateCurrentScreen({ subtitleSize: Number(e.target.value) })} className="w-14 bg-gray-800 border border-gray-700 rounded px-1.5 py-0.5 text-xs text-white text-center" />
+                        <div className="w-5 h-5 rounded overflow-hidden border border-gray-600 inline-block relative">
+                          <input type="color" value={current.subtitleColor} onChange={e => updateCurrentScreen({ subtitleColor: e.target.value })} className="absolute -top-2 -left-2 w-8 h-8 cursor-pointer" />
+                        </div>
+                      </div>
+                    </div>
+                    <textarea 
+                      value={current.subtitle} 
+                      onChange={e => updateCurrentScreen({ subtitle: e.target.value })}
+                      rows={3}
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 resize-none"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Mockup Tab */}
+              {activeTab === 'mockup' && (
+                <div className="space-y-4 animate-in">
+                  
+                  {/* Primary Screenshot */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">Primary App Screenshot</label>
+                    <div className="relative border-2 border-dashed border-gray-700 rounded-xl p-4 hover:border-indigo-500 hover:bg-gray-800/40 transition-colors flex flex-col items-center justify-center text-center cursor-pointer group">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                      />
+                      <div className="bg-gray-800 rounded-full p-2 mb-1.5 group-hover:bg-indigo-900/50 group-hover:text-indigo-400 transition-colors">
+                        <IconUpload />
+                      </div>
+                      <p className="text-xs font-medium text-gray-300">Click or drag screenshot</p>
+                    </div>
+                    {current.screenshot && (
+                      <button onClick={() => updateCurrentScreen({ screenshot: null })} className="mt-1.5 text-[11px] text-red-400 hover:text-red-300 w-full text-right cursor-pointer">Remove Screenshot</button>
+                    )}
+                  </div>
+
+                  {/* Secondary Screenshot if Dual Mockup */}
+                  {current.layout === 'dual' && (
+                    <div className="bg-indigo-950/20 border border-indigo-500/30 p-3 rounded-xl">
+                      <label className="block text-xs font-medium text-indigo-300 mb-2">Secondary Mockup (2nd Phone)</label>
+                      <div className="relative border-2 border-dashed border-indigo-700/60 rounded-lg p-3 hover:border-indigo-400 hover:bg-gray-800/40 transition-colors flex flex-col items-center justify-center text-center cursor-pointer">
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          onChange={handleImageUpload2}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                        />
+                        <p className="text-xs text-indigo-200">Upload 2nd Screenshot (Optional)</p>
+                      </div>
+                      {current.screenshot2 && (
+                        <button onClick={() => updateCurrentScreen({ screenshot2: null })} className="mt-1 text-[11px] text-red-400 hover:text-red-300 w-full text-right cursor-pointer">Remove 2nd Screenshot</button>
+                      )}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">Device Frame</label>
+                    <div className="flex bg-gray-800 rounded-lg p-1">
+                      {['iphone', 'android', 'none'].map(type => (
+                        <button
+                          key={type}
+                          onClick={() => updateCurrentScreen({ deviceType: type })}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-colors ${current.deviceType === type ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="flex justify-between text-xs font-medium text-gray-400 mb-1.5">
+                      <span>Device Scale</span>
+                      <span className="text-gray-500 font-mono">{Math.round(current.deviceScale * 100)}%</span>
+                    </label>
+                    <input 
+                      type="range" min="0.5" max="1.6" step="0.05" 
+                      value={current.deviceScale} 
+                      onChange={e => updateCurrentScreen({ deviceScale: Number(e.target.value) })}
+                      className="w-full accent-indigo-500 cursor-pointer" 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex justify-between text-xs font-medium text-gray-400 mb-1.5">
+                      <span>Vertical Offset</span>
+                      <span className="text-gray-500 font-mono">{current.yOffset}px</span>
+                    </label>
+                    <input 
+                      type="range" min="-200" max="200" step="5" 
+                      value={current.yOffset} 
+                      onChange={e => updateCurrentScreen({ yOffset: Number(e.target.value) })}
+                      className="w-full accent-indigo-500 cursor-pointer" 
+                    />
+                  </div>
+
+                </div>
+              )}
+
+              {/* App Icon Tab */}
+              {activeTab === 'appicon' && (
+                <div className="space-y-4 animate-in">
+                  <div className="bg-indigo-900/20 border border-indigo-500/30 rounded-lg p-3 text-xs text-indigo-300">
+                    <p className="font-semibold mb-0.5">iOS Assets.xcassets Generator</p>
+                    <p className="opacity-80">Generate all iPhone & iPad icon asset sizes packed into a valid Xcode folder.</p>
+                  </div>
+
+                  <button
+                    onClick={generateSampleIcon}
+                    className="w-full py-2 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 rounded-lg text-xs font-medium transition-colors text-center"
+                  >
+                    ✨ Generate Default Icon
+                  </button>
+
+                  <div className="relative border-2 border-dashed border-gray-700 rounded-xl p-4 hover:border-indigo-500 text-center cursor-pointer">
+                    <input type="file" accept="image/*" onChange={handleIconUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                    <p className="text-xs text-gray-300">Upload Custom 1024x1024 PNG</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    {ICON_PREVIEW_PRESETS.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => { setIconPreset(p.id); if (p.display > 0) setIconPreviewSize(p.display); }}
+                        className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs border transition-colors ${iconPreset === p.id ? 'bg-indigo-900/40 border-indigo-500 text-indigo-200 font-semibold' : 'bg-gray-800/60 border-gray-700 text-gray-400'}`}
+                      >
+                        <span>{p.name}</span>
+                        <span className="text-[10px] opacity-60 font-mono">{p.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <button 
+                    onClick={generateXCAssets}
+                    disabled={!appIcon || isGeneratingIcon}
+                    className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold shadow-lg ${!appIcon ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}
+                  >
+                    <IconDownload /> {isGeneratingIcon ? 'Generating...' : 'Download Assets.xcassets'}
+                  </button>
+                </div>
+              )}
+
+            </div>
+          </div>
+
+          {/* Center Canvas Preview Area */}
+          <div className="flex-1 relative bg-neutral-950 p-4 md:p-8 flex flex-col justify-center items-center overflow-auto custom-checkerboard">
+            
+            {/* Top Control Bar: Screen Navigation */}
+            {activeTab !== 'appicon' && (
+              <div className="flex items-center gap-3 bg-gray-900/90 backdrop-blur-md px-4 py-2 rounded-xl border border-gray-800 shadow-xl mb-4 z-10">
+                <button
+                  onClick={handlePrevMockup}
+                  disabled={currentScreenIndex === 0}
+                  className={`p-1.5 rounded-lg border transition-colors ${currentScreenIndex === 0 ? 'text-gray-600 border-gray-800 cursor-not-allowed' : 'text-gray-200 border-gray-700 hover:bg-gray-800'}`}
+                  title="Previous Mockup"
+                >
+                  <IconChevronLeft />
+                </button>
+
+                <div className="flex items-center gap-2 text-xs font-semibold text-gray-300">
+                  <span>Mockup {currentScreenIndex + 1} of {screens.length}</span>
+                  <span className="text-gray-600">|</span>
+                  <span className="text-indigo-400">{current.label}</span>
+                  <span className="text-gray-600">|</span>
+                  <span className="text-gray-500 font-mono text-[11px]">{width} × {height}</span>
+                </div>
+
+                <button
+                  onClick={handleNextMockup}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-200 text-xs font-medium transition-colors"
+                  title="Next Mockup or Add Screen"
+                >
+                  <span>{currentScreenIndex === screens.length - 1 ? 'Add Next' : 'Next'}</span>
+                  <IconChevronRight />
+                </button>
+              </div>
+            )}
+
+            {/* Canvas or AppIcon Preview */}
+            {activeTab === 'appicon' ? (
+              <div className="flex flex-col items-center justify-center py-6">
+                {appIcon ? (
+                  iconPreset === 'grid' ? (
+                    <div className="flex flex-wrap items-end justify-center gap-8 max-w-2xl bg-gray-900/70 p-8 rounded-2xl border border-gray-800 backdrop-blur-md">
+                      {[
+                        { name: '1024px', size: 140 },
+                        { name: '180px (@3x)', size: 90 },
+                        { name: '120px (@2x)', size: 65 },
+                        { name: '87px (Settings)', size: 48 },
+                        { name: '60px (Notify)', size: 36 },
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex flex-col items-center gap-2">
+                          <img src={appIcon.src} alt={item.name} className="shadow-2xl shadow-black ring-1 ring-white/10" style={{ width: `${item.size}px`, height: `${item.size}px`, borderRadius: '22.37%' }} />
+                          <span className="text-[10px] font-medium text-gray-400">{item.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <img 
+                        src={appIcon.src} 
+                        alt="App Icon Preview" 
+                        className="shadow-2xl shadow-black ring-1 ring-white/15 transition-all duration-300"
+                        style={{ width: `${iconPreviewSize}px`, height: `${iconPreviewSize}px`, borderRadius: '22.37%' }}
+                      />
+                      <p className="mt-4 text-gray-400 text-xs font-mono bg-gray-900 px-3 py-1 rounded-full border border-gray-800">
+                        {ICON_PREVIEW_PRESETS.find(p => p.id === iconPreset)?.label || `${iconPreviewSize} × ${iconPreviewSize} px`}
+                      </p>
+                    </div>
+                  )
+                ) : (
+                  <div className="text-center p-8">
+                    <p className="text-xs text-gray-500 mb-3">No custom icon generated</p>
+                    <button onClick={generateSampleIcon} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium">✨ Generate Sample Icon</button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="relative flex justify-center items-center max-w-full max-h-full transition-all duration-300">
+                <canvas 
+                  ref={canvasRef}
+                  width={width}
+                  height={height}
+                  className="shadow-2xl shadow-black/90 rounded ring-1 ring-white/10"
+                  style={{
+                    maxHeight: 'calc(100vh - 160px)',
+                    maxWidth: '100%',
+                    objectFit: 'contain',
+                    transform: 'translateZ(0)'
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Quick Helper Tip Footer */}
+            {activeTab !== 'appicon' && (
+              <div className="mt-3 text-[11px] text-gray-500 flex items-center gap-4">
+                <span>Use <b>+ Add Mockup</b> to create new slides</span>
+                <span>•</span>
+                <span>Select <b>Dual Mockups</b> in Layout for 2-device showcases</span>
+                <span>•</span>
+                <span>Change <b>Feature Graphic Background</b> in the Background tab</span>
+              </div>
+            )}
+
+          </div>
+
+        </div>
+      );
+    }
+
+    // Mount React App
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<App />);
+  </script>
+</body>
+</html>
