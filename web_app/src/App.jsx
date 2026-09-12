@@ -822,15 +822,6 @@ Get started today and elevate your experience.`
     }
     setIsGeneratingDescAI(false);
   };
-        setTimeout(() => setAiToast(''), 4000);
-      }
-    } catch (err) {
-      console.error(err);
-      setAiToast(`⚠️ Failed to generate: ${err.message}`);
-      setTimeout(() => setAiToast(''), 3500);
-    }
-    setIsGeneratingDescAI(false);
-  };
 
   const renderScreenToCanvas = (ctx, scr, targetW, targetH) => {
     ctx.clearRect(0, 0, targetW, targetH);
