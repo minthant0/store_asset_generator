@@ -48,6 +48,31 @@ const IconSpinner = () => (
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
   </svg>
 );
+const IconZoomIn = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+  </svg>
+);
+const IconZoomOut = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/>
+  </svg>
+);
+const IconMaximize = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+  </svg>
+);
+const IconFolder = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+  </svg>
+);
+const IconImage = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+  </svg>
+);
 
 const loadJSZip = async () => {
   if (window.JSZip) return window.JSZip;
@@ -160,6 +185,13 @@ export default function App() {
   const [width, setWidth] = useState(PRESETS['play-feature'].width);
   const [height, setHeight] = useState(PRESETS['play-feature'].height);
 
+  // Settings (Gemini & Download Location)
+  const [settingsTab, setSettingsTab] = useState('download'); // 'download' | 'gemini'
+  const [downloadPath, setDownloadPath] = useState(() => localStorage.getItem('download_path_location') || 'Downloads/StoreMockups');
+  const [autoSubfolder, setAutoSubfolder] = useState(() => localStorage.getItem('download_auto_subfolder') !== 'false');
+  const [directoryHandle, setDirectoryHandle] = useState(null);
+  const [dirName, setDirName] = useState(() => localStorage.getItem('download_dir_name') || '');
+
   // Gemini Settings
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
   const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('gemini_model') || 'gemini-1.5-flash');
@@ -167,6 +199,15 @@ export default function App() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [testStatus, setTestStatus] = useState(null);
   const [testMessage, setTestMessage] = useState('');
+
+  // Interactive View Screen Space (Zoom, Pan & Image Add)
+  const [zoomLevel, setZoomLevel] = useState(1.0); // 0.25 to 3.0
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isDragOverCanvas, setIsDragOverCanvas] = useState(false);
+  const fileInputRef = useRef(null);
+  const viewContainerRef = useRef(null);
 
   // AI Generation states
   const [aiAppPrompt, setAiAppPrompt] = useState('Habit Tracker with Daily Streaks & Analytics');
@@ -210,17 +251,43 @@ Tap Install and launch your next high-converting store listing today!`
     });
   };
 
+  const handlePickDirectory = async () => {
+    if ('showDirectoryPicker' in window) {
+      try {
+        const handle = await window.showDirectoryPicker();
+        setDirectoryHandle(handle);
+        setDirName(handle.name);
+        setDownloadPath(handle.name);
+        localStorage.setItem('download_dir_name', handle.name);
+        localStorage.setItem('download_path_location', handle.name);
+        setTestStatus('success');
+        setTestMessage(`Folder linked: ${handle.name}`);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          setTestStatus('error');
+          setTestMessage(err.message || 'Folder selection failed');
+        }
+      }
+    } else {
+      setTestStatus('error');
+      setTestMessage('Direct folder picker not supported in this browser. Enter path manually below.');
+    }
+  };
+
   const handleSaveSettings = () => {
     localStorage.setItem('gemini_api_key', geminiApiKey.trim());
     localStorage.setItem('gemini_model', geminiModel);
+    localStorage.setItem('download_path_location', downloadPath.trim());
+    localStorage.setItem('download_auto_subfolder', autoSubfolder ? 'true' : 'false');
     setTestStatus('success');
-    setTestMessage('Key & Model saved successfully!');
+    setTestMessage('Settings saved successfully!');
     setTimeout(() => {
       setIsSettingsOpen(false);
       setTestStatus(null);
       setTestMessage('');
     }, 1000);
   };
+
 
   const handleTestGeminiKey = async () => {
     const key = geminiApiKey.trim();
@@ -702,12 +769,34 @@ Tap Install and unlock the power of ${name} today!`
     renderScreenToCanvas(ctx, current, width, height);
   }, [current, width, height]);
 
-  const handleDownloadCurrent = () => {
+  const handleDownloadCurrent = async () => {
     if (!canvasRef.current) return;
+    const cleanLabel = current.label.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const fileName = `${cleanLabel}-${width}x${height}.png`;
+
+    // Direct filesystem access if directory handle was picked
+    if (directoryHandle) {
+      try {
+        const fileHandle = await directoryHandle.getFileHandle(fileName, { create: true });
+        const writable = await fileHandle.createWritable();
+        const blob = await new Promise(resolve => canvasRef.current.toBlob(resolve, 'image/png'));
+        await writable.write(blob);
+        await writable.close();
+        setAiToast(`💾 Saved directly to ${directoryHandle.name}/${fileName}!`);
+        setTimeout(() => setAiToast(''), 3500);
+        return;
+      } catch (err) {
+        console.warn('Direct file save failed, falling back to browser download', err);
+      }
+    }
+
     const link = document.createElement('a');
-    link.download = `${current.label.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-${width}x${height}.png`;
+    const folderPrefix = downloadPath ? `${downloadPath.replace(/[^a-z0-9_-]/gi, '_')}_` : '';
+    link.download = `${folderPrefix}${fileName}`;
     link.href = canvasRef.current.toDataURL('image/png');
     link.click();
+    setAiToast(`💾 Download started for: ${downloadPath || 'Downloads'}/${fileName}`);
+    setTimeout(() => setAiToast(''), 3500);
   };
 
   const handleExportAllScreens = async () => {
@@ -715,7 +804,8 @@ Tap Install and unlock the power of ${name} today!`
     try {
       const JSZipClass = await loadJSZip();
       const zip = new JSZipClass();
-      const folder = zip.folder("AppStore_Screenshots");
+      const folderName = autoSubfolder ? (downloadPath ? downloadPath.split('/').pop() || `${appName}_StoreAssets` : `${appName}_StoreAssets`) : "AppStore_Screenshots";
+      const folder = zip.folder(folderName);
       for (let i = 0; i < screens.length; i++) {
         const scr = screens[i];
         const off = document.createElement('canvas');
@@ -725,41 +815,142 @@ Tap Install and unlock the power of ${name} today!`
         const base64 = off.toDataURL('image/png').split(',')[1];
         folder.file(`screen-${i + 1}-${scr.label.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`, base64, { base64: true });
       }
-      zip.file("store_descriptions.txt", `APP: ${appName}\n\nSHORT DESCRIPTION:\n${shortDescription}\n\nFULL DESCRIPTION:\n${fullDescription}`);
+      zip.file("store_descriptions.txt", `APP: ${appName}\n\nSHORT DESCRIPTION:\n${shortDescription}\n\nFULL DESCRIPTION:\n${fullDescription}\n\nTARGET DOWNLOAD PATH:\n${downloadPath || 'Default Downloads'}`);
       const blob = await zip.generateAsync({ type: 'blob' });
+      const zipName = `store-package-${presetKey}.zip`;
+
+      if (directoryHandle) {
+        try {
+          const fileHandle = await directoryHandle.getFileHandle(zipName, { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          setAiToast(`💾 ZIP package saved directly into ${directoryHandle.name}!`);
+          setTimeout(() => setAiToast(''), 4000);
+          setIsExportingAll(false);
+          return;
+        } catch (err) {
+          console.warn('Direct zip save failed, falling back to download link', err);
+        }
+      }
+
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `store-package-${presetKey}.zip`;
+      const folderPrefix = downloadPath ? `${downloadPath.replace(/[^a-z0-9_-]/gi, '_')}_` : '';
+      link.download = `${folderPrefix}${zipName}`;
       link.click();
+      setAiToast(`📦 Store package downloaded to: ${downloadPath || 'Downloads'}/`);
+      setTimeout(() => setAiToast(''), 4000);
     } catch (e) {
       console.error(e);
+      setAiToast(`Export error: ${e.message}`);
     }
     setIsExportingAll(false);
   };
 
-  const handleUploadScreenshot = (e) => {
-    const file = e.target.files[0];
+  const processImageFile = (file) => {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       const img = new Image();
-      img.onload = () => updateCurrentScreen({ screenshot: img });
+      img.onload = () => {
+        updateCurrentScreen({ screenshot: img });
+        setAiToast('📷 Image added to mockup!');
+        setTimeout(() => setAiToast(''), 3000);
+      };
       img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
   };
 
+  const handleUploadScreenshot = (e) => {
+    const file = e.target?.files ? e.target.files[0] : (e instanceof File ? e : null);
+    if (file) processImageFile(file);
+  };
+
   const handleUploadScreenshot2 = (e) => {
-    const file = e.target.files[0];
+    const file = e.target?.files ? e.target.files[0] : null;
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       const img = new Image();
-      img.onload = () => updateCurrentScreen({ screenshot2: img });
+      img.onload = () => {
+        updateCurrentScreen({ screenshot2: img });
+        setAiToast('📷 Secondary screenshot added!');
+        setTimeout(() => setAiToast(''), 3000);
+      };
       img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
   };
+
+  // Zoom and Pan Controls
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(3.0, +(prev + 0.15).toFixed(2)));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(0.25, +(prev - 0.15).toFixed(2)));
+  };
+
+  const handleResetZoom = () => {
+    setZoomLevel(1.0);
+    setPanOffset({ x: 0, y: 0 });
+  };
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+    setZoomLevel(prev => {
+      const next = +(prev * zoomFactor).toFixed(2);
+      return Math.min(3.0, Math.max(0.25, next));
+    });
+  };
+
+  const handleMouseDown = (e) => {
+    if (e.button === 0 || e.button === 1) {
+      setIsPanning(true);
+      setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isPanning) return;
+    setPanOffset({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
+  };
+
+  // Drag & drop directly onto view screen space
+  const handleCanvasDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverCanvas(true);
+  };
+
+  const handleCanvasDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverCanvas(false);
+  };
+
+  const handleCanvasDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverCanvas(false);
+    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/')) {
+        processImageFile(file);
+      }
+    }
+  };
+
 
   return (
     <div className="flex h-screen w-full bg-gray-950 text-gray-100 font-sans overflow-hidden">
@@ -771,18 +962,18 @@ Tap Install and unlock the power of ${name} today!`
         </div>
       )}
 
-      {/* Gemini Settings Modal */}
+      {/* Settings Modal (Download Path & Gemini AI) */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-gray-900 border border-gray-700 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-5">
+          <div className="bg-gray-900 border border-gray-700 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-gray-800 pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
                   <IconSettings />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-white">Gemini API Settings</h2>
-                  <p className="text-[11px] text-gray-400">Power auto-generation of screens & descriptions</p>
+                  <h2 className="text-sm font-bold text-white">App Settings</h2>
+                  <p className="text-[11px] text-gray-400">Configure Download Path & Gemini AI</p>
                 </div>
               </div>
               <button onClick={() => setIsSettingsOpen(false)} className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800 cursor-pointer">
@@ -790,52 +981,145 @@ Tap Install and unlock the power of ${name} today!`
               </button>
             </div>
 
-            <div className="flex items-center justify-between bg-gray-950 p-3 rounded-xl border border-gray-800">
-              <span className="text-xs text-gray-400">Status</span>
-              <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border flex items-center gap-1.5 ${geminiApiKey ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40' : 'bg-amber-950/40 text-amber-400 border-amber-500/30'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${geminiApiKey ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
-                {geminiApiKey ? 'Key Configured' : 'No Key Set (Using Templates)'}
-              </span>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-300 flex justify-between">
-                <span>Gemini API Key</span>
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 text-[11px] underline">
-                  Get Free Key ↗
-                </a>
-              </label>
-              <div className="relative">
-                <input
-                  type={showApiKey ? "text" : "password"}
-                  value={geminiApiKey}
-                  onChange={e => setGeminiApiKey(e.target.value)}
-                  placeholder="AIzaSy..."
-                  className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white pr-10 focus:outline-none focus:border-indigo-500 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-200 cursor-pointer"
-                >
-                  {showApiKey ? <IconEyeOff /> : <IconEye />}
-                </button>
-              </div>
-              <p className="text-[10px] text-gray-500">Stored safely in your browser's localStorage.</p>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-300">Gemini Model</label>
-              <select
-                value={geminiModel}
-                onChange={e => setGeminiModel(e.target.value)}
-                className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+            {/* Settings Tab Selector */}
+            <div className="flex bg-gray-950 p-1 rounded-xl border border-gray-800">
+              <button
+                type="button"
+                onClick={() => setSettingsTab('download')}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${settingsTab === 'download' ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
               >
-                <option value="gemini-1.5-flash">gemini-1.5-flash (Fast & Recommended)</option>
-                <option value="gemini-1.5-pro">gemini-1.5-pro (High Reasoning)</option>
-                <option value="gemini-2.0-flash">gemini-2.0-flash (Latest)</option>
-              </select>
+                <IconFolder />
+                <span>Download Path</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSettingsTab('gemini')}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${settingsTab === 'gemini' ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+              >
+                <IconSparkles />
+                <span>Gemini AI Key</span>
+              </button>
             </div>
+
+            {/* Tab 1: Download Location */}
+            {settingsTab === 'download' && (
+              <div className="space-y-4 pt-1">
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-medium text-gray-300">Download Path / Folder</label>
+                    <button
+                      type="button"
+                      onClick={handlePickDirectory}
+                      className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer hover:underline"
+                      title="Choose a specific local folder on your computer"
+                    >
+                      <IconFolder />
+                      <span>Browse Folder...</span>
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={downloadPath}
+                    onChange={e => setDownloadPath(e.target.value)}
+                    placeholder="Downloads/StoreMockups"
+                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                  />
+                  <p className="text-[10px] text-gray-500">
+                    {dirName ? `✅ Direct Folder Access: ${dirName}` : 'Target path/folder prefix for exported PNGs and ZIP packages.'}
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-400">Quick Path Presets</label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { label: 'Downloads', path: 'Downloads/StoreMockups' },
+                      { label: 'Pictures', path: 'Pictures/AppScreenshots' },
+                      { label: 'Desktop', path: 'Desktop/StoreAssets' },
+                      { label: 'Documents', path: 'Documents/Mockups' }
+                    ].map(preset => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => {
+                          setDownloadPath(preset.path);
+                          setDirName('');
+                        }}
+                        className={`px-2.5 py-1.5 text-[11px] rounded-lg border text-left flex items-center justify-between cursor-pointer transition-colors ${downloadPath === preset.path ? 'bg-indigo-950/60 border-indigo-500/60 text-indigo-300' : 'bg-gray-950 border-gray-800 text-gray-400 hover:border-gray-700 hover:text-gray-200'}`}
+                      >
+                        <span className="font-medium">{preset.label}</span>
+                        <span className="text-[9px] text-gray-500 font-mono truncate max-w-[80px]">{preset.path}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2.5 bg-gray-950 p-3 rounded-xl border border-gray-800 cursor-pointer hover:border-gray-700 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={autoSubfolder}
+                    onChange={e => setAutoSubfolder(e.target.checked)}
+                    className="rounded accent-indigo-500 w-4 h-4 cursor-pointer"
+                  />
+                  <div className="text-xs">
+                    <div className="text-gray-200 font-medium">Auto-organize batch export in subfolder</div>
+                    <div className="text-[10px] text-gray-500">Creates an app-specific folder inside exported ZIP archives</div>
+                  </div>
+                </label>
+              </div>
+            )}
+
+            {/* Tab 2: Gemini AI */}
+            {settingsTab === 'gemini' && (
+              <div className="space-y-3.5 pt-1">
+                <div className="flex items-center justify-between bg-gray-950 p-2.5 rounded-xl border border-gray-800">
+                  <span className="text-xs text-gray-400">Status</span>
+                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border flex items-center gap-1.5 ${geminiApiKey ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40' : 'bg-amber-950/40 text-amber-400 border-amber-500/30'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${geminiApiKey ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+                    {geminiApiKey ? 'Key Configured' : 'No Key Set (Using Templates)'}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-300 flex justify-between">
+                    <span>Gemini API Key</span>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 text-[11px] underline">
+                      Get Free Key ↗
+                    </a>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showApiKey ? "text" : "password"}
+                      value={geminiApiKey}
+                      onChange={e => setGeminiApiKey(e.target.value)}
+                      placeholder="AIzaSy..."
+                      className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white pr-10 focus:outline-none focus:border-indigo-500 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-200 cursor-pointer"
+                    >
+                      {showApiKey ? <IconEyeOff /> : <IconEye />}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-gray-500">Stored safely in your browser's localStorage.</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-300">Gemini Model</label>
+                  <select
+                    value={geminiModel}
+                    onChange={e => setGeminiModel(e.target.value)}
+                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value="gemini-1.5-flash">gemini-1.5-flash (Fast & Recommended)</option>
+                    <option value="gemini-1.5-pro">gemini-1.5-pro (High Reasoning)</option>
+                    <option value="gemini-2.0-flash">gemini-2.0-flash (Latest)</option>
+                  </select>
+                </div>
+              </div>
+            )}
 
             {testMessage && (
               <div className={`text-xs p-2.5 rounded-lg border flex items-center gap-2 ${testStatus === 'success' ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' : testStatus === 'error' ? 'bg-red-950/40 border-red-500/40 text-red-300' : 'bg-indigo-950/40 border-indigo-500/40 text-indigo-300'}`}>
@@ -844,14 +1128,16 @@ Tap Install and unlock the power of ${name} today!`
               </div>
             )}
 
-            <div className="flex gap-2 pt-2">
-              <button
-                onClick={handleTestGeminiKey}
-                disabled={testStatus === 'testing'}
-                className="flex-1 py-2 px-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 rounded-xl text-xs font-medium transition-colors cursor-pointer"
-              >
-                Test Connection
-              </button>
+            <div className="flex gap-2 pt-1">
+              {settingsTab === 'gemini' && (
+                <button
+                  onClick={handleTestGeminiKey}
+                  disabled={testStatus === 'testing'}
+                  className="flex-1 py-2 px-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 rounded-xl text-xs font-medium transition-colors cursor-pointer"
+                >
+                  Test Connection
+                </button>
+              )}
               <button
                 onClick={handleSaveSettings}
                 className="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-900/30 transition-colors cursor-pointer"
@@ -878,7 +1164,7 @@ Tap Install and unlock the power of ${name} today!`
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsSettingsOpen(true)}
-              title="Gemini API Key Settings"
+              title="Settings & Download Location"
               className="relative p-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg border border-gray-700 transition-colors cursor-pointer"
             >
               <IconSettings />
@@ -1358,50 +1644,174 @@ Tap Install and unlock the power of ${name} today!`
 
       </div>
 
-      {/* Center Canvas */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 relative custom-checkerboard overflow-auto">
+      {/* Hidden file input for direct image add in view screen space */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleUploadScreenshot}
+        className="hidden"
+      />
+
+      {/* Center Canvas / View Screen Space */}
+      <div 
+        className="flex-1 flex flex-col items-center justify-between p-4 md:p-6 relative custom-checkerboard overflow-hidden select-none"
+        onDragOver={handleCanvasDragOver}
+        onDragLeave={handleCanvasDragLeave}
+        onDrop={handleCanvasDrop}
+      >
         
-        {/* Top Bar Nav */}
-        <div className="flex items-center gap-3 bg-gray-900/90 backdrop-blur px-4 py-2 rounded-xl border border-gray-800 shadow-xl mb-4 z-10">
-          <button
-            onClick={() => setCurrentScreenIndex(Math.max(0, currentScreenIndex - 1))}
-            disabled={currentScreenIndex === 0}
-            className="p-1.5 rounded-lg border border-gray-700 hover:bg-gray-800 disabled:opacity-40 cursor-pointer"
-          >
-            <IconChevronLeft />
-          </button>
-          <div className="text-xs font-semibold text-gray-300 flex items-center gap-2">
-            <span>Mockup {currentScreenIndex + 1} of {screens.length}</span>
-            <span className="text-gray-600">|</span>
-            <span className="text-indigo-400">{current.label}</span>
-            <span className="text-gray-600">|</span>
-            <span className="text-gray-500 font-mono">{width} × {height}</span>
+        {/* Top Control Bar */}
+        <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 bg-gray-900/90 backdrop-blur-md px-3 md:px-4 py-2 rounded-2xl border border-gray-800 shadow-2xl z-20">
+          
+          {/* Screen Navigation */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => {
+                setCurrentScreenIndex(Math.max(0, currentScreenIndex - 1));
+                handleResetZoom();
+              }}
+              disabled={currentScreenIndex === 0}
+              className="p-1.5 rounded-lg border border-gray-700 hover:bg-gray-800 disabled:opacity-40 cursor-pointer text-gray-300 transition-colors"
+              title="Previous Screen"
+            >
+              <IconChevronLeft />
+            </button>
+            <div className="text-xs font-semibold text-gray-300 flex items-center gap-2 px-1">
+              <span>{currentScreenIndex + 1}/{screens.length}</span>
+              <span className="text-gray-600">|</span>
+              <span className="text-indigo-400 font-medium max-w-[90px] truncate">{current.label}</span>
+              <span className="text-gray-600">|</span>
+              <span className="text-gray-500 font-mono text-[11px]">{width}×{height}</span>
+            </div>
+            <button
+              onClick={() => {
+                setCurrentScreenIndex(Math.min(screens.length - 1, currentScreenIndex + 1));
+                handleResetZoom();
+              }}
+              disabled={currentScreenIndex === screens.length - 1}
+              className="p-1.5 rounded-lg border border-gray-700 hover:bg-gray-800 disabled:opacity-40 cursor-pointer text-gray-300 transition-colors"
+              title="Next Screen"
+            >
+              <IconChevronRight />
+            </button>
           </div>
+
+          <div className="h-4 w-px bg-gray-700 mx-1 hidden sm:block"></div>
+
+          {/* Image Add Function in View Screen Space */}
           <button
-            onClick={() => setCurrentScreenIndex(Math.min(screens.length - 1, currentScreenIndex + 1))}
-            disabled={currentScreenIndex === screens.length - 1}
-            className="p-1.5 rounded-lg border border-gray-700 hover:bg-gray-800 disabled:opacity-40 cursor-pointer"
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 hover:text-white border border-indigo-500/40 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
+            title="Add or replace mockup image"
           >
-            <IconChevronRight />
+            <IconImage />
+            <span>Add Image</span>
           </button>
+
+          <div className="h-4 w-px bg-gray-700 mx-1 hidden sm:block"></div>
+
+          {/* Zoom Controls (Zoom In, Zoom Out, Percentage & Fit) */}
+          <div className="flex items-center gap-1 bg-gray-950/80 p-1 rounded-xl border border-gray-800">
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              disabled={zoomLevel <= 0.25}
+              className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-30 cursor-pointer transition-colors"
+              title="Zoom Out (-15%)"
+            >
+              <IconZoomOut />
+            </button>
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              className="px-2 py-0.5 text-[11px] font-mono font-medium text-indigo-300 hover:text-white rounded hover:bg-gray-800 cursor-pointer"
+              title="Click to Reset Zoom (100%)"
+            >
+              {Math.round(zoomLevel * 100)}%
+            </button>
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              disabled={zoomLevel >= 3.0}
+              className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-30 cursor-pointer transition-colors"
+              title="Zoom In (+15%)"
+            >
+              <IconZoomIn />
+            </button>
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              className="p-1 ml-0.5 rounded-lg text-gray-400 hover:text-indigo-300 hover:bg-gray-800 cursor-pointer transition-colors"
+              title="Fit to Screen / Reset Pan & Zoom"
+            >
+              <IconMaximize />
+            </button>
+          </div>
+
         </div>
 
-        <div className="relative flex justify-center items-center max-w-full max-h-full">
-          <canvas
-            ref={canvasRef}
-            width={width}
-            height={height}
-            className="shadow-2xl shadow-black rounded ring-1 ring-white/10"
-            style={{ maxHeight: 'calc(100vh - 160px)', maxWidth: '100%', objectFit: 'contain' }}
-          />
+        {/* View Screen Space (Interactive Zoom & Pan Viewport) */}
+        <div 
+          ref={viewContainerRef}
+          className={`relative flex-1 w-full flex items-center justify-center overflow-hidden cursor-${isPanning ? 'grabbing' : zoomLevel > 1 ? 'grab' : 'default'}`}
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          <div
+            style={{
+              transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})`,
+              transformOrigin: 'center center',
+              transition: isPanning ? 'none' : 'transform 0.1s ease-out'
+            }}
+            className="relative flex justify-center items-center pointer-events-none select-none"
+          >
+            <canvas
+              ref={canvasRef}
+              width={width}
+              height={height}
+              className="shadow-2xl shadow-black rounded-lg ring-1 ring-white/10"
+              style={{ maxHeight: 'calc(100vh - 180px)', maxWidth: '100%', objectFit: 'contain' }}
+            />
+
+            {/* If no screenshot, elegant click-to-add button overlay */}
+            {!current.screenshot && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute inset-0 m-auto w-44 h-11 flex items-center justify-center gap-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-xl shadow-2xl backdrop-blur font-medium text-xs border border-indigo-400/40 pointer-events-auto cursor-pointer transition-transform hover:scale-105"
+              >
+                <IconImage />
+                <span>Click to Add Image</span>
+              </button>
+            )}
+          </div>
+
+          {/* Drag & Drop Visual Overlay */}
+          {isDragOverCanvas && (
+            <div className="absolute inset-4 bg-indigo-950/85 border-2 border-dashed border-indigo-400 rounded-2xl flex flex-col items-center justify-center z-30 pointer-events-none backdrop-blur-sm animate-pulse">
+              <div className="p-3.5 bg-indigo-600/40 text-indigo-200 rounded-full mb-2">
+                <IconUpload />
+              </div>
+              <p className="text-sm font-bold text-white">Drop image here to add to mockup</p>
+              <p className="text-[11px] text-indigo-300 mt-0.5">Supports PNG, JPG, WebP</p>
+            </div>
+          )}
         </div>
 
-        <div className="mt-3 text-[11px] text-gray-500 flex items-center gap-4">
-          <span>Configure Gemini in <b>⚙️ Settings</b></span>
+        {/* Bottom Helper Bar */}
+        <div className="mt-2 text-[11px] text-gray-500 flex flex-wrap items-center justify-center gap-2 md:gap-4 z-10">
+          <span>📁 Download Path: <b className="text-gray-400 font-mono">{downloadPath || 'Downloads'}</b></span>
           <span>•</span>
-          <span>Use <b>✨ AI Auto-Fill</b> to generate screen copy & themes</span>
+          <span>🔍 Scroll or use <b>+ / -</b> to Zoom ({Math.round(zoomLevel * 100)}%)</span>
           <span>•</span>
-          <span>Export complete store package via <b>ZIP</b></span>
+          <span>🖱️ Drag to Pan</span>
+          <span>•</span>
+          <span>📷 Drop image to add</span>
         </div>
 
       </div>
