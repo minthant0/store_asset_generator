@@ -30,7 +30,6 @@
 <script type="text/babel">
   const { useState, useEffect, useRef } = React;
 
-
 // --- SVG Icons ---
 const IconSettings = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -104,6 +103,39 @@ const IconImage = () => (
     <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
   </svg>
 );
+const IconPalette = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+  </svg>
+);
+const IconLink = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+  </svg>
+);
+const IconLayers = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+  </svg>
+);
+const IconCheck = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+);
+
+const LOGO_PALETTES = [
+  { name: 'POS Modern Blue', c1: '#0f172a', c2: '#0284c7', angle: 'diagonal', text: '#ffffff', sub: '#38bdf8' },
+  { name: 'Google Play Indigo', c1: '#312e81', c2: '#4f46e5', angle: 'diagonal', text: '#ffffff', sub: '#a5b4fc' },
+  { name: 'Apple Vibrant', c1: '#09090b', c2: '#18181b', angle: 'vertical', text: '#38bdf8', sub: '#f43f5e' },
+  { name: 'Sunset Crimson', c1: '#831843', c2: '#e11d48', angle: 'diagonal', text: '#ffffff', sub: '#fecdd3' },
+  { name: 'Emerald Pay', c1: '#064e3b', c2: '#059669', angle: 'diagonal', text: '#ffffff', sub: '#6ee7b7' },
+  { name: 'Cyber Neon', c1: '#18181b', c2: '#3b0764', angle: 'horizontal', text: '#c084fc', sub: '#22d3ee' },
+  { name: 'Clean White (POS)', c1: '#ffffff', c2: '#f8fafc', angle: 'vertical', text: '#0f172a', sub: '#ef4444' }
+];
+
 
 const loadJSZip = async () => {
   if (window.JSZip) return window.JSZip;
@@ -239,6 +271,35 @@ function App() {
   const [isDragOverCanvas, setIsDragOverCanvas] = useState(false);
   const fileInputRef = useRef(null);
   const viewContainerRef = useRef(null);
+
+  // Top-level Studio Mode: 'mockups' | 'logo'
+  const [studioMode, setStudioMode] = useState('mockups');
+  const [boundLogoImage, setBoundLogoImage] = useState(null);
+
+  // Logo & App Icon Generator State
+  const [logoMode, setLogoMode] = useState('text'); // 'text' | 'image'
+  const [logoImage, setLogoImage] = useState(null);
+  const [logoText, setLogoText] = useState('POS');
+  const [logoSubText, setLogoSubText] = useState('SYSTEM');
+  const [logoTextColor, setLogoTextColor] = useState('#0f172a');
+  const [logoSubColor, setLogoSubColor] = useState('#ef4444');
+  const [logoTextFont, setLogoTextFont] = useState('Inter, system-ui, sans-serif');
+  const [logoBgType, setLogoBgType] = useState('solid'); // 'solid' | 'gradient' | 'transparent'
+  const [logoBgColor1, setLogoBgColor1] = useState('#ffffff');
+  const [logoBgColor2, setLogoBgColor2] = useState('#f8fafc');
+  const [logoBgAngle, setLogoBgAngle] = useState('vertical');
+  const [logoScale, setLogoScale] = useState(0.75); // 0.25 to 1.0
+  const [logoOffsetX, setLogoOffsetX] = useState(0);
+  const [logoOffsetY, setLogoOffsetY] = useState(0);
+  const [logoShadow, setLogoShadow] = useState(true);
+  const [logoBorder, setLogoBorder] = useState(false);
+  const [logoBorderColor, setLogoBorderColor] = useState('rgba(0,0,0,0.1)');
+  const [logoActiveTab, setLogoActiveTab] = useState('design'); // 'design' | 'background' | 'export'
+  const [previewShape, setPreviewShape] = useState('ios'); // 'ios' | 'android-round' | 'android-squircle' | 'flat'
+  const [isExportingIcons, setIsExportingIcons] = useState(false);
+  const logoCanvasRef = useRef(null);
+  const logoFileInputRef = useRef(null);
+
 
   // AI Generation states
   const [aiAppPrompt, setAiAppPrompt] = useState('Habit Tracker with Daily Streaks & Analytics');
@@ -800,6 +861,387 @@ Tap Install and unlock the power of ${name} today!`
     renderScreenToCanvas(ctx, current, width, height);
   }, [current, width, height]);
 
+  // --- App Icon & Logo Generator Canvas Renderer ---
+  const drawIconToCanvas = (ctx, canvasWidth, canvasHeight, options = {}) => {
+    const {
+      shape = previewShape, // 'flat' | 'ios' | 'android-round' | 'android-squircle' | 'foreground-only'
+      paddingScale = logoScale,
+      offsetX = logoOffsetX,
+      offsetY = logoOffsetY
+    } = options;
+
+    const w = canvasWidth;
+    const h = canvasHeight;
+    ctx.clearRect(0, 0, w, h);
+
+    ctx.save();
+
+    // 1. Clipping Mask
+    if (shape === 'android-round' || shape === 'round') {
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2, w / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+    } else if (shape === 'ios') {
+      const radius = w * 0.225; // Standard iOS continuous corner squircle ratio
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(0, 0, w, h, radius);
+      else ctx.rect(0, 0, w, h);
+      ctx.closePath();
+      ctx.clip();
+    } else if (shape === 'android-squircle' || shape === 'squircle') {
+      const radius = w * 0.32; // Android Adaptive / Samsung OneUI squircle ratio
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(0, 0, w, h, radius);
+      else ctx.rect(0, 0, w, h);
+      ctx.closePath();
+      ctx.clip();
+    }
+
+    // 2. Background (skipped for foreground-only)
+    if (shape !== 'foreground-only') {
+      if (logoBgType === 'gradient') {
+        let grad;
+        if (logoBgAngle === 'horizontal') grad = ctx.createLinearGradient(0, 0, w, 0);
+        else if (logoBgAngle === 'vertical') grad = ctx.createLinearGradient(0, 0, 0, h);
+        else grad = ctx.createLinearGradient(0, 0, w, h);
+        grad.addColorStop(0, logoBgColor1);
+        grad.addColorStop(1, logoBgColor2);
+        ctx.fillStyle = grad;
+      } else if (logoBgType === 'solid') {
+        ctx.fillStyle = logoBgColor1;
+      } else {
+        ctx.fillStyle = 'transparent';
+      }
+      ctx.fillRect(0, 0, w, h);
+
+      // Subtle Border
+      if (logoBorder) {
+        ctx.strokeStyle = logoBorderColor;
+        ctx.lineWidth = Math.max(2, w * 0.015);
+        ctx.stroke();
+      }
+    }
+
+    // 3. Foreground Logo Content
+    ctx.save();
+    if (logoShadow) {
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+      ctx.shadowBlur = w * 0.04;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = w * 0.02;
+    }
+
+    const centerX = w / 2 + (offsetX / 100) * (w / 2);
+    const centerY = h / 2 + (offsetY / 100) * (h / 2);
+
+    if (logoMode === 'image' && logoImage) {
+      const maxDrawW = w * paddingScale;
+      const maxDrawH = h * paddingScale;
+      const aspect = logoImage.width / logoImage.height;
+      let drawW, drawH;
+      if (aspect > 1) {
+        drawW = maxDrawW;
+        drawH = maxDrawW / aspect;
+      } else {
+        drawH = maxDrawH;
+        drawW = maxDrawH * aspect;
+      }
+      ctx.drawImage(logoImage, centerX - drawW / 2, centerY - drawH / 2, drawW, drawH);
+    } else {
+      // Text / Monogram typography
+      const mainSize = w * 0.32 * paddingScale;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      if (logoSubText && logoSubText.trim()) {
+        ctx.fillStyle = logoTextColor;
+        ctx.font = `bold ${mainSize}px ${logoTextFont}`;
+        ctx.fillText(logoText, centerX, centerY - mainSize * 0.24);
+
+        ctx.fillStyle = logoSubColor;
+        ctx.font = `bold ${mainSize * 0.36}px ${logoTextFont}`;
+        ctx.fillText(logoSubText, centerX, centerY + mainSize * 0.48);
+      } else {
+        ctx.fillStyle = logoTextColor;
+        ctx.font = `bold ${mainSize * 1.3}px ${logoTextFont}`;
+        ctx.fillText(logoText, centerX, centerY);
+      }
+    }
+    ctx.restore();
+
+    ctx.restore();
+  };
+
+  useEffect(() => {
+    if (studioMode !== 'logo' || !logoCanvasRef.current) return;
+    const ctx = logoCanvasRef.current.getContext('2d');
+    drawIconToCanvas(ctx, 1024, 1024, { shape: previewShape });
+  }, [
+    studioMode,
+    previewShape,
+    logoMode,
+    logoImage,
+    logoText,
+    logoSubText,
+    logoTextColor,
+    logoSubColor,
+    logoTextFont,
+    logoBgType,
+    logoBgColor1,
+    logoBgColor2,
+    logoBgAngle,
+    logoScale,
+    logoOffsetX,
+    logoOffsetY,
+    logoShadow,
+    logoBorder,
+    logoBorderColor
+  ]);
+
+  const handleUploadLogo = (e) => {
+    const file = e.target?.files ? e.target.files[0] : (e instanceof File ? e : null);
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        setLogoImage(img);
+        setLogoMode('image');
+        setAiToast('📷 Logo image uploaded successfully!');
+        setTimeout(() => setAiToast(''), 3000);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleBindLogoToMockups = () => {
+    const off = document.createElement('canvas');
+    off.width = 1024;
+    off.height = 1024;
+    const ctx = off.getContext('2d');
+    drawIconToCanvas(ctx, 1024, 1024, { shape: 'flat' });
+    const img = new Image();
+    img.onload = () => {
+      setBoundLogoImage(img);
+      setAiToast('🔗 Logo bound to Store Mockups! Click "Apply Icon" on any screen in Mockups.');
+      setTimeout(() => setAiToast(''), 4000);
+    };
+    img.src = off.toDataURL('image/png');
+  };
+
+  const handleApplyLogoToCurrentScreen = () => {
+    const off = document.createElement('canvas');
+    off.width = 1024;
+    off.height = 1024;
+    const ctx = off.getContext('2d');
+    drawIconToCanvas(ctx, 1024, 1024, { shape: 'flat' });
+    const img = new Image();
+    img.onload = () => {
+      updateCurrentScreen({ screenshot: img });
+      setAiToast('✨ Applied App Icon to current mockup screen!');
+      setTimeout(() => setAiToast(''), 3000);
+    };
+    img.src = off.toDataURL('image/png');
+  };
+
+  const handleDownloadPlayStoreIcon = () => {
+    const off = document.createElement('canvas');
+    off.width = 512;
+    off.height = 512;
+    const ctx = off.getContext('2d');
+    drawIconToCanvas(ctx, 512, 512, { shape: 'flat' });
+    const link = document.createElement('a');
+    link.download = 'playstore-icon.png';
+    link.href = off.toDataURL('image/png');
+    link.click();
+    setAiToast('💾 Downloaded playstore-icon.png (512×512)');
+    setTimeout(() => setAiToast(''), 3000);
+  };
+
+  const handleDownloadAppleMasterIcon = () => {
+    const off = document.createElement('canvas');
+    off.width = 1024;
+    off.height = 1024;
+    const ctx = off.getContext('2d');
+    drawIconToCanvas(ctx, 1024, 1024, { shape: 'flat' });
+    const link = document.createElement('a');
+    link.download = 'Icon-App-1024x1024@1x.png';
+    link.href = off.toDataURL('image/png');
+    link.click();
+    setAiToast('💾 Downloaded Apple 1024×1024 Master Icon');
+    setTimeout(() => setAiToast(''), 3000);
+  };
+
+  const handleExportAppIconsZip = async () => {
+    setIsExportingIcons(true);
+    try {
+      const JSZipClass = await loadJSZip();
+      const zip = new JSZipClass();
+
+      const createIconBlob = (size, shape = 'flat') => {
+        const off = document.createElement('canvas');
+        off.width = size;
+        off.height = size;
+        const ctx = off.getContext('2d');
+        drawIconToCanvas(ctx, size, size, { shape });
+        return off.toDataURL('image/png').split(',')[1];
+      };
+
+      // 1. Android Directory matching reference structure
+      const androidFolder = zip.folder("android");
+      androidFolder.file("playstore-icon.png", createIconBlob(512, 'flat'), { base64: true });
+
+      const androidDensities = [
+        { name: "mipmap-mdpi", size: 48, fgSize: 108 },
+        { name: "mipmap-hdpi", size: 72, fgSize: 162 },
+        { name: "mipmap-xhdpi", size: 96, fgSize: 216 },
+        { name: "mipmap-xxhdpi", size: 144, fgSize: 324 },
+        { name: "mipmap-xxxhdpi", size: 192, fgSize: 432 }
+      ];
+
+      androidDensities.forEach(d => {
+        const folder = androidFolder.folder(d.name);
+        folder.file("ic_launcher.png", createIconBlob(d.size, 'flat'), { base64: true });
+        folder.file("ic_launcher_round.png", createIconBlob(d.size, 'round'), { base64: true });
+        folder.file("ic_launcher_foreground.png", createIconBlob(d.fgSize, 'foreground-only'), { base64: true });
+      });
+
+      const anydpiFolder = androidFolder.folder("mipmap-anydpi-v26");
+      const icLauncherXml = `<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>`;
+      anydpiFolder.file("ic_launcher.xml", icLauncherXml);
+      anydpiFolder.file("ic_launcher_round.xml", icLauncherXml);
+
+      const drawableFolder = androidFolder.folder("drawable");
+      const bgColorHex = logoBgColor1.startsWith('#') ? logoBgColor1 : '#ffffff';
+      const bgXml = `<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="${bgColorHex}"
+        android:pathData="M0,0h108v108h-108z" />
+</vector>`;
+      drawableFolder.file("ic_launcher_background.xml", bgXml);
+
+      // 2. Apple Devices Directory matching reference structure
+      const appleFolder = zip.folder("apple-devices");
+      const appIconSet = appleFolder.folder("AppIcon.appiconset");
+
+      const iosIcons = [
+        { filename: "Icon-App-20x20@1x.png", size: 20 },
+        { filename: "Icon-App-20x20@2x.png", size: 40 },
+        { filename: "Icon-App-20x20@3x.png", size: 60 },
+        { filename: "Icon-App-29x29@1x.png", size: 29 },
+        { filename: "Icon-App-29x29@2x.png", size: 58 },
+        { filename: "Icon-App-29x29@3x.png", size: 87 },
+        { filename: "Icon-App-40x40@1x.png", size: 40 },
+        { filename: "Icon-App-40x40@2x.png", size: 80 },
+        { filename: "Icon-App-40x40@3x.png", size: 120 },
+        { filename: "Icon-App-60x60@2x.png", size: 120 },
+        { filename: "Icon-App-60x60@3x.png", size: 180 },
+        { filename: "Icon-App-76x76@1x.png", size: 76 },
+        { filename: "Icon-App-76x76@2x.png", size: 152 },
+        { filename: "Icon-App-83.5x83.5@2x.png", size: 167 },
+        { filename: "Icon-App-1024x1024@1x.png", size: 1024 }
+      ];
+
+      iosIcons.forEach(icon => {
+        appIconSet.file(icon.filename, createIconBlob(icon.size, 'flat'), { base64: true });
+      });
+
+      const contentsJson = {
+        images: [
+          { size: "20x20", idiom: "iphone", filename: "Icon-App-20x20@2x.png", scale: "2x" },
+          { size: "20x20", idiom: "iphone", filename: "Icon-App-20x20@3x.png", scale: "3x" },
+          { size: "29x29", idiom: "iphone", filename: "Icon-App-29x29@1x.png", scale: "1x" },
+          { size: "29x29", idiom: "iphone", filename: "Icon-App-29x29@2x.png", scale: "2x" },
+          { size: "29x29", idiom: "iphone", filename: "Icon-App-29x29@3x.png", scale: "3x" },
+          { size: "40x40", idiom: "iphone", filename: "Icon-App-40x40@2x.png", scale: "2x" },
+          { size: "40x40", idiom: "iphone", filename: "Icon-App-40x40@3x.png", scale: "3x" },
+          { size: "60x60", idiom: "iphone", filename: "Icon-App-60x60@2x.png", scale: "2x" },
+          { size: "60x60", idiom: "iphone", filename: "Icon-App-60x60@3x.png", scale: "3x" },
+          { size: "20x20", idiom: "ipad", filename: "Icon-App-20x20@1x.png", scale: "1x" },
+          { size: "20x20", idiom: "ipad", filename: "Icon-App-20x20@2x.png", scale: "2x" },
+          { size: "29x29", idiom: "ipad", filename: "Icon-App-29x29@1x.png", scale: "1x" },
+          { size: "29x29", idiom: "ipad", filename: "Icon-App-29x29@2x.png", scale: "2x" },
+          { size: "40x40", idiom: "ipad", filename: "Icon-App-40x40@1x.png", scale: "1x" },
+          { size: "40x40", idiom: "ipad", filename: "Icon-App-40x40@2x.png", scale: "2x" },
+          { size: "76x76", idiom: "ipad", filename: "Icon-App-76x76@1x.png", scale: "1x" },
+          { size: "76x76", idiom: "ipad", filename: "Icon-App-76x76@2x.png", scale: "2x" },
+          { size: "83.5x83.5", idiom: "ipad", filename: "Icon-App-83.5x83.5@2x.png", scale: "2x" },
+          { size: "1024x1024", idiom: "ios-marketing", filename: "Icon-App-1024x1024@1x.png", scale: "1x" }
+        ],
+        info: { version: 1, author: "xcode" }
+      };
+      appIconSet.file("Contents.json", JSON.stringify(contentsJson, null, 2));
+
+      // Messages Icon stickers
+      const messagesSet = appleFolder.folder("Messages Icon.stickersiconset");
+      const createMsgBlob = (w, h) => {
+        const off = document.createElement('canvas');
+        off.width = w; off.height = h;
+        const ctx = off.getContext('2d');
+        drawIconToCanvas(ctx, w, h, { shape: 'flat' });
+        return off.toDataURL('image/png').split(',')[1];
+      };
+      messagesSet.file("Icon-60x45@2x.png", createMsgBlob(120, 90), { base64: true });
+      messagesSet.file("Icon-60x45@3x.png", createMsgBlob(180, 135), { base64: true });
+      messagesSet.file("Icon-67x50@2x.png", createMsgBlob(134, 100), { base64: true });
+      messagesSet.file("Icon-74x55@2x.png", createMsgBlob(148, 110), { base64: true });
+      messagesSet.file("Icon-1024x768@1x.png", createMsgBlob(1024, 768), { base64: true });
+      const messagesContents = {
+        images: [
+          { size: "60x45", idiom: "iphone", filename: "Icon-60x45@2x.png", scale: "2x" },
+          { size: "60x45", idiom: "iphone", filename: "Icon-60x45@3x.png", scale: "3x" },
+          { size: "67x50", idiom: "ipad", filename: "Icon-67x50@2x.png", scale: "2x" },
+          { size: "74x55", idiom: "ipad", filename: "Icon-74x55@2x.png", scale: "2x" },
+          { size: "1024x768", idiom: "ios-marketing", filename: "Icon-1024x768@1x.png", scale: "1x" }
+        ],
+        info: { version: 1, author: "xcode" }
+      };
+      messagesSet.file("Contents.json", JSON.stringify(messagesContents, null, 2));
+
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const zipFileName = `${appName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_app_icons.zip`;
+
+      if (directoryHandle) {
+        try {
+          const fileHandle = await directoryHandle.getFileHandle(zipFileName, { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          setAiToast(`💾 App Icons saved directly into ${directoryHandle.name}!`);
+          setTimeout(() => setAiToast(''), 4000);
+          setIsExportingIcons(false);
+          return;
+        } catch (err) {
+          console.warn('Direct save failed, using download link', err);
+        }
+      }
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      const folderPrefix = downloadPath ? `${downloadPath.replace(/[^a-z0-9_-]/gi, '_')}_` : '';
+      link.download = `${folderPrefix}${zipFileName}`;
+      link.click();
+      setAiToast(`📦 App Icons ZIP downloaded for Android & Apple!`);
+      setTimeout(() => setAiToast(''), 4000);
+    } catch (e) {
+      console.error(e);
+      setAiToast(`Export error: ${e.message}`);
+    }
+    setIsExportingIcons(false);
+  };
+
+
   const handleDownloadCurrent = async () => {
     if (!canvasRef.current) return;
     const cleanLabel = current.label.replace(/[^a-z0-9]/gi, '_').toLowerCase();
@@ -977,7 +1419,11 @@ Tap Install and unlock the power of ${name} today!`
     if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
       if (file.type.startsWith('image/')) {
-        processImageFile(file);
+        if (studioMode === 'logo') {
+          handleUploadLogo(file);
+        } else {
+          processImageFile(file);
+        }
       }
     }
   };
@@ -1183,15 +1629,38 @@ Tap Install and unlock the power of ${name} today!`
       {/* Sidebar */}
       <div className="w-80 md:w-96 flex-shrink-0 bg-gray-900 border-r border-gray-800 flex flex-col h-full z-10 shadow-2xl">
         
-        {/* Header */}
-        <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-          <div>
-            <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-              <span>Store Mockup Studio</span>
-              <span className="text-[10px] bg-indigo-900/60 text-indigo-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-500/40">AI Pro</span>
-            </h1>
-            <p className="text-[11px] text-gray-400 mt-0.5">Feature Graphic & Screen Series</p>
+        {/* Studio Mode Switcher */}
+        <div className="p-3 bg-gray-950/90 border-b border-gray-800">
+          <div className="flex bg-gray-900 p-1 rounded-xl border border-gray-800">
+            <button
+              onClick={() => setStudioMode('mockups')}
+              className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${studioMode === 'mockups' ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+            >
+              <span>📱 Store Mockups</span>
+            </button>
+            <button
+              onClick={() => setStudioMode('logo')}
+              className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${studioMode === 'logo' ? 'bg-emerald-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+            >
+              <IconPalette />
+              <span>Logo & Icons</span>
+              <span className="text-[9px] bg-emerald-400/20 text-emerald-300 font-bold px-1 py-0.2 rounded border border-emerald-400/30">PRO</span>
+            </button>
           </div>
+        </div>
+
+        {studioMode === 'mockups' ? (
+          <>
+            {/* Header */}
+            <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+              <div>
+                <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                  <span>Store Mockup Studio</span>
+                  <span className="text-[10px] bg-indigo-900/60 text-indigo-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-500/40">AI Pro</span>
+                </h1>
+                <p className="text-[11px] text-gray-400 mt-0.5">Feature Graphic & Screen Series</p>
+              </div>
+
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsSettingsOpen(true)}
@@ -1275,9 +1744,48 @@ Tap Install and unlock the power of ${name} today!`
           {activeTab === 'mockup' && (
             <div className="space-y-5">
               
+              {/* Bound Logo Integration Banner */}
+              <div className="bg-gradient-to-r from-indigo-950/60 to-purple-950/40 border border-indigo-500/30 p-3 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-800 border border-gray-700 flex items-center justify-center flex-shrink-0 shadow">
+                    {boundLogoImage || logoImage ? (
+                      <img src={boundLogoImage ? boundLogoImage.src : logoImage.src} alt="App Logo" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[10px] font-bold text-indigo-400">POS</span>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <span>App Logo / Icon</span>
+                      <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-medium border border-emerald-500/30">Bound</span>
+                    </div>
+                    <div className="text-[10px] text-gray-400">From Logo & App Icon Studio</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleApplyLogoToCurrentScreen}
+                    className="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer shadow-sm"
+                    title="Place this icon as the mockup screenshot"
+                  >
+                    Apply Icon
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStudioMode('logo')}
+                    className="p-1 text-gray-400 hover:text-white rounded hover:bg-gray-800 cursor-pointer"
+                    title="Open in Logo Studio"
+                  >
+                    <IconLink />
+                  </button>
+                </div>
+              </div>
+
               {/* Primary Screenshot Upload Box */}
               <div>
                 <label className="block text-xs font-medium text-gray-300 mb-2">App Screenshot</label>
+
                 <div className="relative border-2 border-dashed border-gray-700 rounded-xl p-6 hover:border-indigo-500 hover:bg-gray-800/50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer group">
                   <input 
                     type="file" 
@@ -1672,15 +2180,478 @@ Tap Install and unlock the power of ${name} today!`
           )}
 
         </div>
+          </>
+        ) : (
+          <>
+            {/* Logo Studio Sidebar Header */}
+            <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+              <div>
+                <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                  <span>Logo & Icon Studio</span>
+                  <span className="text-[10px] bg-emerald-900/60 text-emerald-300 font-semibold px-2 py-0.5 rounded-full border border-emerald-500/40">v2.0</span>
+                </h1>
+                <p className="text-[11px] text-gray-400 mt-0.5">Android & Apple Asset Catalogs</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  title="Settings & Download Location"
+                  className="relative p-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg border border-gray-700 transition-colors cursor-pointer"
+                >
+                  <IconSettings />
+                </button>
+                <button
+                  onClick={handleExportAppIconsZip}
+                  disabled={isExportingIcons}
+                  title="Export All Android & Apple Icons ZIP"
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg shadow-emerald-900/20 active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  {isExportingIcons ? <IconSpinner /> : <IconDownload />}
+                  <span>ZIP</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Binding Banner */}
+            <div className="bg-gray-950/80 px-4 py-2 border-b border-gray-800 flex items-center justify-between">
+              <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Target: <b>android/</b> & <b>apple-devices/</b></span>
+              </div>
+              <button
+                type="button"
+                onClick={handleBindLogoToMockups}
+                className="flex items-center gap-1 text-[11px] font-medium text-indigo-300 hover:text-indigo-200 bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-500/40 px-2 py-1 rounded-lg cursor-pointer transition-all"
+                title="Bind this logo to use across Store Mockup scenes"
+              >
+                <IconLink />
+                <span>Bind to Mockups</span>
+              </button>
+            </div>
+
+            {/* Logo Studio Tabs */}
+            <div className="flex border-b border-gray-800 bg-gray-900/50">
+              {[
+                { id: 'design', label: 'Logo Design' },
+                { id: 'background', label: 'Background' },
+                { id: 'export', label: 'Catalog Export' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setLogoActiveTab(tab.id)}
+                  className={`flex-1 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${logoActiveTab === tab.id ? 'border-emerald-500 text-emerald-400 bg-gray-800/50 font-semibold' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Logo Studio Tab Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-thin">
+              
+              {/* Tab: Logo Design */}
+              {logoActiveTab === 'design' && (
+                <div className="space-y-4">
+                  
+                  {/* Type Switcher: Upload Image vs Monogram */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-300 mb-2">Logo Source</label>
+                    <div className="flex bg-gray-800 p-1 rounded-lg">
+                      <button
+                        type="button"
+                        onClick={() => setLogoMode('image')}
+                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${logoMode === 'image' ? 'bg-emerald-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                      >
+                        Upload Image
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLogoMode('text')}
+                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${logoMode === 'text' ? 'bg-emerald-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                      >
+                        Text / Monogram
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Upload Image Section */}
+                  {logoMode === 'image' && (
+                    <div className="space-y-2">
+                      <div className="relative border-2 border-dashed border-gray-700 rounded-xl p-5 hover:border-emerald-500 hover:bg-gray-800/50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer group">
+                        <input
+                          ref={logoFileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleUploadLogo}
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                            opacity: 0,
+                            cursor: 'pointer',
+                            zIndex: 20
+                          }}
+                        />
+                        <div className="bg-gray-800 rounded-full p-2.5 mb-2 group-hover:bg-emerald-900/50 group-hover:text-emerald-400 transition-colors">
+                          <IconUpload />
+                        </div>
+                        <p className="text-xs font-medium text-gray-200">
+                          {logoImage ? 'Click to replace logo image' : 'Upload custom logo file'}
+                        </p>
+                        <p className="text-[10px] text-gray-500 mt-0.5">PNG, SVG, JPG (like POS SYSTEM logo)</p>
+                      </div>
+
+                      {logoImage && (
+                        <button
+                          type="button"
+                          onClick={() => setLogoImage(null)}
+                          className="text-xs text-red-400 hover:text-red-300 w-full text-right cursor-pointer"
+                        >
+                          Remove Logo Image
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Text / Monogram Section */}
+                  {logoMode === 'text' && (
+                    <div className="space-y-3 bg-gray-800/40 p-3.5 rounded-xl border border-gray-800">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1">Main Monogram / Text</label>
+                        <input
+                          type="text"
+                          value={logoText}
+                          onChange={e => setLogoText(e.target.value)}
+                          placeholder="POS"
+                          maxLength={8}
+                          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white font-bold tracking-wider uppercase focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1">Subtitle / Tagline (Optional)</label>
+                        <input
+                          type="text"
+                          value={logoSubText}
+                          onChange={e => setLogoSubText(e.target.value)}
+                          placeholder="SYSTEM"
+                          maxLength={14}
+                          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white font-semibold tracking-widest uppercase focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <div>
+                          <label className="block text-[11px] text-gray-400 mb-1">Main Color</label>
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="color"
+                              value={logoTextColor}
+                              onChange={e => setLogoTextColor(e.target.value)}
+                              className="w-7 h-7 rounded border border-gray-700 cursor-pointer"
+                            />
+                            <span className="text-xs text-gray-300 font-mono uppercase">{logoTextColor}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-gray-400 mb-1">Sub Color</label>
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="color"
+                              value={logoSubColor}
+                              onChange={e => setLogoSubColor(e.target.value)}
+                              className="w-7 h-7 rounded border border-gray-700 cursor-pointer"
+                            />
+                            <span className="text-xs text-gray-300 font-mono uppercase">{logoSubColor}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] text-gray-400 mb-1">Font Family</label>
+                        <select
+                          value={logoTextFont}
+                          onChange={e => setLogoTextFont(e.target.value)}
+                          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                        >
+                          <option value="Inter, system-ui, sans-serif">Modern Sans (Inter)</option>
+                          <option value="'Roboto', sans-serif">Clean Tech (Roboto)</option>
+                          <option value="'Arial Black', sans-serif">Bold Impact (Heavy)</option>
+                          <option value="Georgia, serif">Editorial Serif</option>
+                          <option value="monospace">Monospace Code</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Foreground Sliders */}
+                  <div className="space-y-3 pt-1">
+                    <div>
+                      <label className="flex justify-between text-xs font-medium text-gray-300 mb-1.5">
+                        <span>Icon Scale / Size</span>
+                        <span className="text-gray-400 font-mono">{Math.round(logoScale * 100)}%</span>
+                      </label>
+                      <input
+                        type="range"
+                        min="0.3"
+                        max="1.0"
+                        step="0.02"
+                        value={logoScale}
+                        onChange={e => setLogoScale(Number(e.target.value))}
+                        className="w-full accent-emerald-500 cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="flex justify-between text-[11px] font-medium text-gray-400 mb-1">
+                          <span>Offset X</span>
+                          <span className="text-gray-500 font-mono">{logoOffsetX}</span>
+                        </label>
+                        <input
+                          type="range"
+                          min="-40"
+                          max="40"
+                          step="2"
+                          value={logoOffsetX}
+                          onChange={e => setLogoOffsetX(Number(e.target.value))}
+                          className="w-full accent-emerald-500 cursor-pointer"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex justify-between text-[11px] font-medium text-gray-400 mb-1">
+                          <span>Offset Y</span>
+                          <span className="text-gray-500 font-mono">{logoOffsetY}</span>
+                        </label>
+                        <input
+                          type="range"
+                          min="-40"
+                          max="40"
+                          step="2"
+                          value={logoOffsetY}
+                          onChange={e => setLogoOffsetY(Number(e.target.value))}
+                          className="w-full accent-emerald-500 cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-1 flex items-center justify-between bg-gray-800/40 p-2.5 rounded-xl border border-gray-800">
+                      <span className="text-xs text-gray-300 font-medium">Elevation Drop Shadow</span>
+                      <input
+                        type="checkbox"
+                        checked={logoShadow}
+                        onChange={e => setLogoShadow(e.target.checked)}
+                        className="rounded accent-emerald-500 w-4 h-4 cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between bg-gray-800/40 p-2.5 rounded-xl border border-gray-800">
+                      <span className="text-xs text-gray-300 font-medium">Subtle Boundary Border</span>
+                      <input
+                        type="checkbox"
+                        checked={logoBorder}
+                        onChange={e => setLogoBorder(e.target.checked)}
+                        className="rounded accent-emerald-500 w-4 h-4 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* Tab: Background */}
+              {logoActiveTab === 'background' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-300 mb-2">Background Style</label>
+                    <div className="flex bg-gray-800 p-1 rounded-lg">
+                      {['solid', 'gradient', 'transparent'].map(t => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setLogoBgType(t)}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-colors cursor-pointer ${logoBgType === t ? 'bg-emerald-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {logoBgType !== 'transparent' && (
+                    <div className="space-y-3 bg-gray-800/40 p-3 rounded-xl border border-gray-800">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">{logoBgType === 'gradient' ? 'Primary / Start Color' : 'Background Color'}</label>
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="color"
+                            value={logoBgColor1}
+                            onChange={e => setLogoBgColor1(e.target.value)}
+                            className="w-8 h-8 rounded border border-gray-700 cursor-pointer"
+                          />
+                          <input
+                            type="text"
+                            value={logoBgColor1}
+                            onChange={e => setLogoBgColor1(e.target.value)}
+                            className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white font-mono uppercase"
+                          />
+                        </div>
+                      </div>
+
+                      {logoBgType === 'gradient' && (
+                        <>
+                          <div>
+                            <label className="block text-xs text-gray-400 mb-1">Secondary / End Color</label>
+                            <div className="flex gap-2 items-center">
+                              <input
+                                type="color"
+                                value={logoBgColor2}
+                                onChange={e => setLogoBgColor2(e.target.value)}
+                                className="w-8 h-8 rounded border border-gray-700 cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={logoBgColor2}
+                                onChange={e => setLogoBgColor2(e.target.value)}
+                                className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white font-mono uppercase"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-gray-400 mb-1">Gradient Direction</label>
+                            <div className="flex bg-gray-900 rounded-lg p-1">
+                              {['diagonal', 'horizontal', 'vertical'].map(dir => (
+                                <button
+                                  key={dir}
+                                  type="button"
+                                  onClick={() => setLogoBgAngle(dir)}
+                                  className={`flex-1 py-1 text-xs rounded capitalize transition-colors cursor-pointer ${logoBgAngle === dir ? 'bg-gray-700 text-white font-medium' : 'text-gray-400 hover:text-gray-200'}`}
+                                >
+                                  {dir}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Color Presets */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">Preset Palettes</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {LOGO_PALETTES.map((pal, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setLogoBgColor1(pal.c1);
+                            setLogoBgColor2(pal.c2);
+                            setLogoBgAngle(pal.angle);
+                            setLogoTextColor(pal.text);
+                            setLogoSubColor(pal.sub);
+                            setLogoBgType('gradient');
+                          }}
+                          className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/60 border border-gray-700/60 hover:border-emerald-500 text-left cursor-pointer transition-colors"
+                        >
+                          <div className="w-5 h-5 rounded flex-shrink-0" style={{ background: `linear-gradient(135deg, ${pal.c1}, ${pal.c2})` }}></div>
+                          <span className="text-[11px] text-gray-200 truncate">{pal.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* Tab: Catalog Export */}
+              {logoActiveTab === 'export' && (
+                <div className="space-y-4">
+                  
+                  {/* Directory Structure Summary Card */}
+                  <div className="bg-gray-950 p-3.5 rounded-xl border border-gray-800 space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-white">
+                      <IconFolder />
+                      <span>Exact Match Folder Hierarchy</span>
+                    </div>
+                    <div className="font-mono text-[10px] text-gray-400 space-y-1 bg-gray-900 p-2.5 rounded-lg border border-gray-800">
+                      <div className="text-emerald-400 font-semibold">📁 android/</div>
+                      <div className="pl-3 text-gray-400">• drawable/ (ic_launcher_background.xml)</div>
+                      <div className="pl-3 text-gray-400">• mipmap-anydpi-v26/ (adaptive XMLs)</div>
+                      <div className="pl-3 text-gray-400">• mipmap-(m, h, xh, xxh, xxxh)dpi/</div>
+                      <div className="pl-3 text-emerald-300">• playstore-icon.png (512×512)</div>
+                      <div className="text-indigo-400 font-semibold mt-1.5">📁 apple-devices/</div>
+                      <div className="pl-3 text-gray-400">• AppIcon.appiconset/ (Contents.json, 1024 master)</div>
+                      <div className="pl-3 text-gray-400">• Messages Icon.stickersiconset/</div>
+                    </div>
+                  </div>
+
+                  {/* Big Export Button */}
+                  <button
+                    type="button"
+                    onClick={handleExportAppIconsZip}
+                    disabled={isExportingIcons}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white rounded-xl text-xs font-bold shadow-xl shadow-emerald-950/40 active:scale-98 cursor-pointer disabled:opacity-50"
+                  >
+                    {isExportingIcons ? <><IconSpinner /> Generating Multi-Platform Icons...</> : <><IconDownload /> Download Complete Bundle (ZIP)</>}
+                  </button>
+
+                  <div className="space-y-2 pt-1">
+                    <label className="block text-xs font-medium text-gray-400">Single Quick Downloads</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={handleDownloadPlayStoreIcon}
+                        className="py-2 px-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 rounded-lg text-[11px] font-medium transition-colors cursor-pointer text-center"
+                      >
+                        Play Store 512px
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadAppleMasterIcon}
+                        className="py-2 px-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 rounded-lg text-[11px] font-medium transition-colors cursor-pointer text-center"
+                      >
+                        Apple 1024px
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={handleBindLogoToMockups}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-500/40 rounded-xl text-xs font-semibold cursor-pointer transition-colors"
+                    >
+                      <IconLink />
+                      <span>Bind to Store Mockup Studio</span>
+                    </button>
+                  </div>
+
+                </div>
+              )}
+
+            </div>
+          </>
+        )}
 
       </div>
 
-      {/* Hidden file input for direct image add in view screen space */}
+      {/* Hidden file inputs for direct image add in view screen space */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
         onChange={handleUploadScreenshot}
+        className="hidden"
+      />
+      <input
+        ref={logoFileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleUploadLogo}
         className="hidden"
       />
 
@@ -1691,159 +2662,385 @@ Tap Install and unlock the power of ${name} today!`
         onDragLeave={handleCanvasDragLeave}
         onDrop={handleCanvasDrop}
       >
-        
-        {/* Top Control Bar */}
-        <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 bg-gray-900/90 backdrop-blur-md px-3 md:px-4 py-2 rounded-2xl border border-gray-800 shadow-2xl z-20">
-          
-          {/* Screen Navigation */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => {
-                setCurrentScreenIndex(Math.max(0, currentScreenIndex - 1));
-                handleResetZoom();
-              }}
-              disabled={currentScreenIndex === 0}
-              className="p-1.5 rounded-lg border border-gray-700 hover:bg-gray-800 disabled:opacity-40 cursor-pointer text-gray-300 transition-colors"
-              title="Previous Screen"
-            >
-              <IconChevronLeft />
-            </button>
-            <div className="text-xs font-semibold text-gray-300 flex items-center gap-2 px-1">
-              <span>{currentScreenIndex + 1}/{screens.length}</span>
-              <span className="text-gray-600">|</span>
-              <span className="text-indigo-400 font-medium max-w-[90px] truncate">{current.label}</span>
-              <span className="text-gray-600">|</span>
-              <span className="text-gray-500 font-mono text-[11px]">{width}×{height}</span>
-            </div>
-            <button
-              onClick={() => {
-                setCurrentScreenIndex(Math.min(screens.length - 1, currentScreenIndex + 1));
-                handleResetZoom();
-              }}
-              disabled={currentScreenIndex === screens.length - 1}
-              className="p-1.5 rounded-lg border border-gray-700 hover:bg-gray-800 disabled:opacity-40 cursor-pointer text-gray-300 transition-colors"
-              title="Next Screen"
-            >
-              <IconChevronRight />
-            </button>
-          </div>
+        {studioMode === 'mockups' ? (
+          <>
+            {/* Top Control Bar for Store Mockups */}
+            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 bg-gray-900/90 backdrop-blur-md px-3 md:px-4 py-2 rounded-2xl border border-gray-800 shadow-2xl z-20">
+              
+              {/* Screen Navigation */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    setCurrentScreenIndex(Math.max(0, currentScreenIndex - 1));
+                    handleResetZoom();
+                  }}
+                  disabled={currentScreenIndex === 0}
+                  className="p-1.5 rounded-lg border border-gray-700 hover:bg-gray-800 disabled:opacity-40 cursor-pointer text-gray-300 transition-colors"
+                  title="Previous Screen"
+                >
+                  <IconChevronLeft />
+                </button>
+                <div className="text-xs font-semibold text-gray-300 flex items-center gap-2 px-1">
+                  <span>{currentScreenIndex + 1}/{screens.length}</span>
+                  <span className="text-gray-600">|</span>
+                  <span className="text-indigo-400 font-medium max-w-[90px] truncate">{current.label}</span>
+                  <span className="text-gray-600">|</span>
+                  <span className="text-gray-500 font-mono text-[11px]">{width}×{height}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setCurrentScreenIndex(Math.min(screens.length - 1, currentScreenIndex + 1));
+                    handleResetZoom();
+                  }}
+                  disabled={currentScreenIndex === screens.length - 1}
+                  className="p-1.5 rounded-lg border border-gray-700 hover:bg-gray-800 disabled:opacity-40 cursor-pointer text-gray-300 transition-colors"
+                  title="Next Screen"
+                >
+                  <IconChevronRight />
+                </button>
+              </div>
 
-          <div className="h-4 w-px bg-gray-700 mx-1 hidden sm:block"></div>
+              <div className="h-4 w-px bg-gray-700 mx-1 hidden sm:block"></div>
 
-          {/* Image Add Function in View Screen Space */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 hover:text-white border border-indigo-500/40 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
-            title="Add or replace mockup image"
-          >
-            <IconImage />
-            <span>Add Image</span>
-          </button>
-
-          <div className="h-4 w-px bg-gray-700 mx-1 hidden sm:block"></div>
-
-          {/* Zoom Controls (Zoom In, Zoom Out, Percentage & Fit) */}
-          <div className="flex items-center gap-1 bg-gray-950/80 p-1 rounded-xl border border-gray-800">
-            <button
-              type="button"
-              onClick={handleZoomOut}
-              disabled={zoomLevel <= 0.25}
-              className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-30 cursor-pointer transition-colors"
-              title="Zoom Out (-15%)"
-            >
-              <IconZoomOut />
-            </button>
-            <button
-              type="button"
-              onClick={handleResetZoom}
-              className="px-2 py-0.5 text-[11px] font-mono font-medium text-indigo-300 hover:text-white rounded hover:bg-gray-800 cursor-pointer"
-              title="Click to Reset Zoom (100%)"
-            >
-              {Math.round(zoomLevel * 100)}%
-            </button>
-            <button
-              type="button"
-              onClick={handleZoomIn}
-              disabled={zoomLevel >= 3.0}
-              className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-30 cursor-pointer transition-colors"
-              title="Zoom In (+15%)"
-            >
-              <IconZoomIn />
-            </button>
-            <button
-              type="button"
-              onClick={handleResetZoom}
-              className="p-1 ml-0.5 rounded-lg text-gray-400 hover:text-indigo-300 hover:bg-gray-800 cursor-pointer transition-colors"
-              title="Fit to Screen / Reset Pan & Zoom"
-            >
-              <IconMaximize />
-            </button>
-          </div>
-
-        </div>
-
-        {/* View Screen Space (Interactive Zoom & Pan Viewport) */}
-        <div 
-          ref={viewContainerRef}
-          className={`relative flex-1 w-full flex items-center justify-center overflow-hidden cursor-${isPanning ? 'grabbing' : zoomLevel > 1 ? 'grab' : 'default'}`}
-          onWheel={handleWheel}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        >
-          <div
-            style={{
-              transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})`,
-              transformOrigin: 'center center',
-              transition: isPanning ? 'none' : 'transform 0.1s ease-out'
-            }}
-            className="relative flex justify-center items-center pointer-events-none select-none"
-          >
-            <canvas
-              ref={canvasRef}
-              width={width}
-              height={height}
-              className="shadow-2xl shadow-black rounded-lg ring-1 ring-white/10"
-              style={{ maxHeight: 'calc(100vh - 180px)', maxWidth: '100%', objectFit: 'contain' }}
-            />
-
-            {/* If no screenshot, elegant click-to-add button overlay */}
-            {!current.screenshot && (
+              {/* Image Add Function in View Screen Space */}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute inset-0 m-auto w-44 h-11 flex items-center justify-center gap-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-xl shadow-2xl backdrop-blur font-medium text-xs border border-indigo-400/40 pointer-events-auto cursor-pointer transition-transform hover:scale-105"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 hover:text-white border border-indigo-500/40 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
+                title="Add or replace mockup image"
               >
                 <IconImage />
-                <span>Click to Add Image</span>
+                <span>Add Image</span>
               </button>
-            )}
-          </div>
 
-          {/* Drag & Drop Visual Overlay */}
-          {isDragOverCanvas && (
-            <div className="absolute inset-4 bg-indigo-950/85 border-2 border-dashed border-indigo-400 rounded-2xl flex flex-col items-center justify-center z-30 pointer-events-none backdrop-blur-sm animate-pulse">
-              <div className="p-3.5 bg-indigo-600/40 text-indigo-200 rounded-full mb-2">
-                <IconUpload />
+              <div className="h-4 w-px bg-gray-700 mx-1 hidden sm:block"></div>
+
+              {/* Zoom Controls (Zoom In, Zoom Out, Percentage & Fit) */}
+              <div className="flex items-center gap-1 bg-gray-950/80 p-1 rounded-xl border border-gray-800">
+                <button
+                  type="button"
+                  onClick={handleZoomOut}
+                  disabled={zoomLevel <= 0.25}
+                  className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-30 cursor-pointer transition-colors"
+                  title="Zoom Out (-15%)"
+                >
+                  <IconZoomOut />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetZoom}
+                  className="px-2 py-0.5 text-[11px] font-mono font-medium text-indigo-300 hover:text-white rounded hover:bg-gray-800 cursor-pointer"
+                  title="Click to Reset Zoom (100%)"
+                >
+                  {Math.round(zoomLevel * 100)}%
+                </button>
+                <button
+                  type="button"
+                  onClick={handleZoomIn}
+                  disabled={zoomLevel >= 3.0}
+                  className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-30 cursor-pointer transition-colors"
+                  title="Zoom In (+15%)"
+                >
+                  <IconZoomIn />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetZoom}
+                  className="p-1 ml-0.5 rounded-lg text-gray-400 hover:text-indigo-300 hover:bg-gray-800 cursor-pointer transition-colors"
+                  title="Fit to Screen / Reset Pan & Zoom"
+                >
+                  <IconMaximize />
+                </button>
               </div>
-              <p className="text-sm font-bold text-white">Drop image here to add to mockup</p>
-              <p className="text-[11px] text-indigo-300 mt-0.5">Supports PNG, JPG, WebP</p>
-            </div>
-          )}
-        </div>
 
-        {/* Bottom Helper Bar */}
-        <div className="mt-2 text-[11px] text-gray-500 flex flex-wrap items-center justify-center gap-2 md:gap-4 z-10">
-          <span>📁 Download Path: <b className="text-gray-400 font-mono">{downloadPath || 'Downloads'}</b></span>
-          <span>•</span>
-          <span>🔍 Scroll or use <b>+ / -</b> to Zoom ({Math.round(zoomLevel * 100)}%)</span>
-          <span>•</span>
-          <span>🖱️ Drag to Pan</span>
-          <span>•</span>
-          <span>📷 Drop image to add</span>
-        </div>
+            </div>
+
+            {/* View Screen Space (Interactive Zoom & Pan Viewport for Mockups) */}
+            <div 
+              ref={viewContainerRef}
+              className={`relative flex-1 w-full flex items-center justify-center overflow-hidden cursor-${isPanning ? 'grabbing' : zoomLevel > 1 ? 'grab' : 'default'}`}
+              onWheel={handleWheel}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
+              <div
+                style={{
+                  transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})`,
+                  transformOrigin: 'center center',
+                  transition: isPanning ? 'none' : 'transform 0.1s ease-out'
+                }}
+                className="relative flex justify-center items-center pointer-events-none select-none"
+              >
+                <canvas
+                  ref={canvasRef}
+                  width={width}
+                  height={height}
+                  className="shadow-2xl shadow-black rounded-lg ring-1 ring-white/10"
+                  style={{ maxHeight: 'calc(100vh - 180px)', maxWidth: '100%', objectFit: 'contain' }}
+                />
+
+                {/* If no screenshot, elegant click-to-add button overlay */}
+                {!current.screenshot && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute inset-0 m-auto w-44 h-11 flex items-center justify-center gap-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-xl shadow-2xl backdrop-blur font-medium text-xs border border-indigo-400/40 pointer-events-auto cursor-pointer transition-transform hover:scale-105"
+                  >
+                    <IconImage />
+                    <span>Click to Add Image</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Drag & Drop Visual Overlay */}
+              {isDragOverCanvas && (
+                <div className="absolute inset-4 bg-indigo-950/85 border-2 border-dashed border-indigo-400 rounded-2xl flex flex-col items-center justify-center z-30 pointer-events-none backdrop-blur-sm animate-pulse">
+                  <div className="p-3.5 bg-indigo-600/40 text-indigo-200 rounded-full mb-2">
+                    <IconUpload />
+                  </div>
+                  <p className="text-sm font-bold text-white">Drop image here to add to mockup</p>
+                  <p className="text-[11px] text-indigo-300 mt-0.5">Supports PNG, JPG, WebP</p>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Helper Bar for Mockups */}
+            <div className="mt-2 text-[11px] text-gray-500 flex flex-wrap items-center justify-center gap-2 md:gap-4 z-10">
+              <span>📁 Download Path: <b className="text-gray-400 font-mono">{downloadPath || 'Downloads'}</b></span>
+              <span>•</span>
+              <span>🔍 Scroll or use <b>+ / -</b> to Zoom ({Math.round(zoomLevel * 100)}%)</span>
+              <span>•</span>
+              <span>🖱️ Drag to Pan</span>
+              <span>•</span>
+              <span>📷 Drop image to add</span>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Top Control Bar for Logo Studio */}
+            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 bg-gray-900/90 backdrop-blur-md px-3 md:px-4 py-2 rounded-2xl border border-gray-800 shadow-2xl z-20">
+              
+              {/* Platform Preview Shape Selector */}
+              <div className="flex items-center gap-1 bg-gray-950/80 p-1 rounded-xl border border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => setPreviewShape('ios')}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                    previewShape === 'ios'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                  title="Apple iOS / iPadOS Squircle Preview"
+                >
+                  <span>🍏</span>
+                  <span>iOS</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewShape('android-round')}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                    previewShape === 'android-round'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                  title="Google Pixel Adaptive Round Icon Preview"
+                >
+                  <span>🤖</span>
+                  <span>Round</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewShape('android-squircle')}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                    previewShape === 'android-squircle'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                  title="Samsung OneUI Adaptive Squircle Preview"
+                >
+                  <span>📱</span>
+                  <span>Samsung</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewShape('flat')}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                    previewShape === 'flat'
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                  title="Google Play Store 512×512 Flat Square Preview"
+                >
+                  <span>⛶</span>
+                  <span>Play Store</span>
+                </button>
+              </div>
+
+              <div className="h-4 w-px bg-gray-700 mx-1 hidden sm:block"></div>
+
+              {/* Bind to Mockups Action Button */}
+              <button
+                type="button"
+                onClick={handleBindLogoToMockups}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-semibold shadow-md active:scale-95 cursor-pointer transition-all"
+                title="Bind this logo to your Store Mockups so you can inject it with 1-click"
+              >
+                <IconCheck />
+                <span>Bind to Mockups</span>
+              </button>
+
+              {/* Upload Logo Asset Button */}
+              <button
+                type="button"
+                onClick={() => logoFileInputRef.current?.click()}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 hover:text-white border border-indigo-500/40 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
+                title="Upload custom logo graphic (PNG, SVG, JPG)"
+              >
+                <IconUpload />
+                <span>Upload Graphic</span>
+              </button>
+
+              <div className="h-4 w-px bg-gray-700 mx-1 hidden sm:block"></div>
+
+              {/* Zoom Controls for Logo Studio */}
+              <div className="flex items-center gap-1 bg-gray-950/80 p-1 rounded-xl border border-gray-800">
+                <button
+                  type="button"
+                  onClick={handleZoomOut}
+                  disabled={zoomLevel <= 0.25}
+                  className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-30 cursor-pointer transition-colors"
+                  title="Zoom Out (-15%)"
+                >
+                  <IconZoomOut />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetZoom}
+                  className="px-2 py-0.5 text-[11px] font-mono font-medium text-indigo-300 hover:text-white rounded hover:bg-gray-800 cursor-pointer"
+                  title="Click to Reset Zoom (100%)"
+                >
+                  {Math.round(zoomLevel * 100)}%
+                </button>
+                <button
+                  type="button"
+                  onClick={handleZoomIn}
+                  disabled={zoomLevel >= 3.0}
+                  className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-30 cursor-pointer transition-colors"
+                  title="Zoom In (+15%)"
+                >
+                  <IconZoomIn />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetZoom}
+                  className="p-1 ml-0.5 rounded-lg text-gray-400 hover:text-indigo-300 hover:bg-gray-800 cursor-pointer transition-colors"
+                  title="Fit to Screen / Reset Pan & Zoom"
+                >
+                  <IconMaximize />
+                </button>
+              </div>
+
+            </div>
+
+            {/* View Screen Space (Interactive Zoom & Pan Viewport for Logo Studio) */}
+            <div 
+              ref={viewContainerRef}
+              className={`relative flex-1 w-full flex items-center justify-center overflow-hidden cursor-${isPanning ? 'grabbing' : zoomLevel > 1 ? 'grab' : 'default'}`}
+              onWheel={handleWheel}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
+              <div
+                style={{
+                  transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})`,
+                  transformOrigin: 'center center',
+                  transition: isPanning ? 'none' : 'transform 0.1s ease-out'
+                }}
+                className="relative flex justify-center items-center pointer-events-none select-none p-8"
+              >
+                <canvas
+                  ref={logoCanvasRef}
+                  width={1024}
+                  height={1024}
+                  className={`shadow-2xl shadow-black ring-1 ring-white/10 ${
+                    previewShape === 'ios' ? 'rounded-[22%]' :
+                    previewShape === 'android-round' ? 'rounded-full' :
+                    previewShape === 'android-squircle' ? 'rounded-[30%]' :
+                    'rounded-xl'
+                  }`}
+                  style={{ 
+                    width: '420px', 
+                    height: '420px', 
+                    maxWidth: '80vw', 
+                    maxHeight: 'calc(100vh - 240px)', 
+                    objectFit: 'contain' 
+                  }}
+                />
+
+                {/* If logo mode is image and no image uploaded yet, show overlay button */}
+                {logoMode === 'image' && !logoImage && (
+                  <button
+                    type="button"
+                    onClick={() => logoFileInputRef.current?.click()}
+                    className="absolute inset-0 m-auto w-48 h-12 flex items-center justify-center gap-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-xl shadow-2xl backdrop-blur font-medium text-xs border border-indigo-400/40 pointer-events-auto cursor-pointer transition-transform hover:scale-105"
+                  >
+                    <IconUpload />
+                    <span>Upload Logo Graphic</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Drag & Drop Visual Overlay for Logo Studio */}
+              {isDragOverCanvas && (
+                <div className="absolute inset-4 bg-indigo-950/85 border-2 border-dashed border-indigo-400 rounded-2xl flex flex-col items-center justify-center z-30 pointer-events-none backdrop-blur-sm animate-pulse">
+                  <div className="p-3.5 bg-indigo-600/40 text-indigo-200 rounded-full mb-2">
+                    <IconUpload />
+                  </div>
+                  <p className="text-sm font-bold text-white">Drop logo graphic here</p>
+                  <p className="text-[11px] text-indigo-300 mt-0.5">Supports PNG, JPG, SVG, WebP</p>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Live Preview & Status Bar for Logo Studio */}
+            <div className="mt-2 text-[11px] text-gray-400 flex flex-wrap items-center justify-between gap-3 w-full max-w-4xl px-4 py-2 bg-gray-900/70 backdrop-blur rounded-xl border border-gray-800/80 z-10">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-gray-300">Target Preview:</span>
+                <span className="px-2 py-0.5 bg-gray-800 text-indigo-300 rounded font-mono text-[10px] uppercase font-bold">{previewShape}</span>
+                <span className="text-gray-600">|</span>
+                <span>1024×1024 Master</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleBindLogoToMockups}
+                  className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                >
+                  🔗 Bind to Mockups
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportAppIconsZip}
+                  disabled={isExportingIcons}
+                  className="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                >
+                  {isExportingIcons ? 'Exporting...' : '📦 Export Asset Catalog ZIP'}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 text-gray-500 text-[11px]">
+                <span>📁 Path: <b className="text-gray-300 font-mono">{downloadPath || 'Downloads'}</b></span>
+                <span>•</span>
+                <span>🔍 Zoom {Math.round(zoomLevel * 100)}%</span>
+              </div>
+            </div>
+          </>
+        )}
 
       </div>
 
