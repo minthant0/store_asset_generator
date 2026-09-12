@@ -125,6 +125,13 @@ const IconCheck = () => (
     <polyline points="20 6 9 17 4 12"/>
   </svg>
 );
+const IconLayout = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+    <line x1="3" x2="21" y1="9" y2="9"/>
+    <line x1="9" x2="9" y1="21" y2="9"/>
+  </svg>
+);
 
 const LOGO_PALETTES = [
   { name: 'POS Modern Blue', c1: '#0f172a', c2: '#0284c7', angle: 'diagonal', text: '#ffffff', sub: '#38bdf8' },
@@ -1965,29 +1972,56 @@ Tap Install and unlock the power of ${name} today!`
                 </div>
               </div>
 
-              {/* Compositions */}
+              {/* Layout Design Dropdown Selector */}
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-2">Layout Compositions (8 Styles)</label>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {LAYOUT_COMPOSITIONS.map(comp => (
-                    <button
-                      key={comp.id}
-                      onClick={() => updateCurrentScreen({ layout: comp.id })}
-                      className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${current.layout === comp.id ? 'bg-indigo-950/60 border-indigo-500 text-white' : 'bg-gray-800/60 border-gray-800 text-gray-300 hover:bg-gray-800'}`}
-                    >
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                    <IconLayout />
+                    <span>Layout Design</span>
+                  </label>
+                  <span className="text-[10px] px-2 py-0.5 bg-indigo-900/60 border border-indigo-700/50 text-indigo-300 rounded-md font-semibold">
+                    {LAYOUT_COMPOSITIONS.find(c => c.id === current.layout)?.tag || 'Style'}
+                  </span>
+                </div>
+
+                {/* Dropdown Selector */}
+                <div className="relative">
+                  <select
+                    value={current.layout}
+                    onChange={(e) => updateCurrentScreen({ layout: e.target.value })}
+                    className="w-full bg-gray-900 border border-gray-700 hover:border-indigo-500 focus:border-indigo-500 text-gray-100 text-xs font-medium rounded-xl px-3.5 py-2.5 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer transition-colors shadow-inner"
+                  >
+                    {LAYOUT_COMPOSITIONS.map(comp => (
+                      <option key={comp.id} value={comp.id} className="bg-gray-900 text-gray-100 py-1.5">
+                        {comp.title} ({comp.tag}) — {comp.desc}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Selected Layout Summary Card */}
+                {(() => {
+                  const activeLayout = LAYOUT_COMPOSITIONS.find(c => c.id === current.layout) || LAYOUT_COMPOSITIONS[0];
+                  return (
+                    <div className="mt-2 p-2.5 bg-indigo-950/40 border border-indigo-500/30 rounded-xl flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium">{comp.title}</span>
-                          <span className="text-[10px] px-1.5 py-0.2 bg-gray-700 text-gray-300 rounded">{comp.tag}</span>
+                          <span className="text-xs font-bold text-white">{activeLayout.title}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-indigo-900/80 border border-indigo-700/60 text-indigo-200 rounded font-medium">{activeLayout.tag}</span>
                         </div>
-                        <p className="text-[11px] text-gray-400 mt-0.5">{comp.desc}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">{activeLayout.desc}</p>
                       </div>
-                      <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${current.layout === comp.id ? 'border-indigo-400 bg-indigo-600' : 'border-gray-600'}`}>
-                        {current.layout === comp.id && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                      <div className="text-emerald-400 p-1 bg-emerald-950/60 border border-emerald-500/30 rounded-lg">
+                        <IconCheck />
                       </div>
-                    </button>
-                  ))}
-                </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Batch Export */}
@@ -2698,6 +2732,32 @@ Tap Install and unlock the power of ${name} today!`
                 >
                   <IconChevronRight />
                 </button>
+              </div>
+
+              <div className="h-4 w-px bg-gray-700 mx-1 hidden sm:block"></div>
+
+              {/* Layout Dropdown Selector on Canvas Top Bar */}
+              <div className="flex items-center gap-1.5 bg-gray-950/80 px-2.5 py-1 rounded-xl border border-gray-800">
+                <span className="text-[11px] text-gray-400 hidden md:inline font-medium">Layout:</span>
+                <div className="relative flex items-center">
+                  <select
+                    value={current.layout}
+                    onChange={(e) => updateCurrentScreen({ layout: e.target.value })}
+                    className="bg-transparent text-indigo-300 hover:text-white font-medium text-xs rounded-lg pl-1 pr-6 py-0.5 appearance-none focus:outline-none cursor-pointer"
+                    title="Change Mockup Layout Composition"
+                  >
+                    {LAYOUT_COMPOSITIONS.map(comp => (
+                      <option key={comp.id} value={comp.id} className="bg-gray-900 text-gray-200">
+                        {comp.title} ({comp.tag})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-0.5 pointer-events-none text-gray-500">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               <div className="h-4 w-px bg-gray-700 mx-1 hidden sm:block"></div>

@@ -1411,7 +1411,7 @@ Tap Install and unlock the power of ${name} today!`
       
       {/* Toast */}
       {aiToast && (
-        <div className="fixed top-4 right-4 z-50 bg-indigo-900 border border-indigo-400 text-indigo-100 px-4 py-2.5 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2">
+        <div className="fixed top-4 right-4 z-50 bg-gray-800 border border-gray-600 text-gray-100 px-4 py-2.5 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2">
           <span>{aiToast}</span>
         </div>
       )}
@@ -1422,7 +1422,7 @@ Tap Install and unlock the power of ${name} today!`
           <div className="bg-gray-900 border border-gray-700 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-gray-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
+                <div className="p-2 bg-gray-700 text-gray-300 rounded-lg">
                   <IconSettings />
                 </div>
                 <div>
@@ -1440,7 +1440,7 @@ Tap Install and unlock the power of ${name} today!`
               <button
                 type="button"
                 onClick={() => setSettingsTab('download')}
-                className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${settingsTab === 'download' ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${settingsTab === 'download' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
               >
                 <IconFolder />
                 <span>Download Path</span>
@@ -1448,7 +1448,7 @@ Tap Install and unlock the power of ${name} today!`
               <button
                 type="button"
                 onClick={() => setSettingsTab('gemini')}
-                className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${settingsTab === 'gemini' ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${settingsTab === 'gemini' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
               >
                 <IconSparkles />
                 <span>Gemini AI Key</span>
@@ -1464,7 +1464,7 @@ Tap Install and unlock the power of ${name} today!`
                     <button
                       type="button"
                       onClick={handlePickDirectory}
-                      className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer hover:underline"
+                      className="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer hover:underline"
                       title="Choose a specific local folder on your computer"
                     >
                       <IconFolder />
@@ -1476,7 +1476,7 @@ Tap Install and unlock the power of ${name} today!`
                     value={downloadPath}
                     onChange={e => setDownloadPath(e.target.value)}
                     placeholder="Downloads/StoreMockups"
-                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
                   />
                   <p className="text-[10px] text-gray-500">
                     {dirName ? `✅ Direct Folder Access: ${dirName}` : 'Target path/folder prefix for exported PNGs and ZIP packages.'}
@@ -1499,7 +1499,7 @@ Tap Install and unlock the power of ${name} today!`
                           setDownloadPath(preset.path);
                           setDirName('');
                         }}
-                        className={`px-2.5 py-1.5 text-[11px] rounded-lg border text-left flex items-center justify-between cursor-pointer transition-colors ${downloadPath === preset.path ? 'bg-indigo-950/60 border-indigo-500/60 text-indigo-300' : 'bg-gray-950 border-gray-800 text-gray-400 hover:border-gray-700 hover:text-gray-200'}`}
+                        className={`px-2.5 py-1.5 text-[11px] rounded-lg border text-left flex items-center justify-between cursor-pointer transition-colors ${downloadPath === preset.path ? 'bg-blue-900/30 border-blue-600 text-blue-200' : 'bg-gray-950 border-gray-800 text-gray-400 hover:border-gray-700 hover:text-gray-200'}`}
                       >
                         <span className="font-medium">{preset.label}</span>
                         <span className="text-[9px] text-gray-500 font-mono truncate max-w-[80px]">{preset.path}</span>
@@ -1513,7 +1513,7 @@ Tap Install and unlock the power of ${name} today!`
                     type="checkbox"
                     checked={autoSubfolder}
                     onChange={e => setAutoSubfolder(e.target.checked)}
-                    className="rounded accent-indigo-500 w-4 h-4 cursor-pointer"
+                    className="rounded accent-blue-500 w-4 h-4 cursor-pointer"
                   />
                   <div className="text-xs">
                     <div className="text-gray-200 font-medium">Auto-organize batch export in subfolder</div>
@@ -1528,8 +1528,8 @@ Tap Install and unlock the power of ${name} today!`
               <div className="space-y-3.5 pt-1">
                 <div className="flex items-center justify-between bg-gray-950 p-2.5 rounded-xl border border-gray-800">
                   <span className="text-xs text-gray-400">Status</span>
-                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border flex items-center gap-1.5 ${geminiApiKey ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40' : 'bg-amber-950/40 text-amber-400 border-amber-500/30'}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${geminiApiKey ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border flex items-center gap-1.5 ${geminiApiKey ? 'bg-blue-900/30 text-blue-300 border-blue-700' : 'bg-gray-800 text-gray-400 border-gray-600'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${geminiApiKey ? 'bg-blue-400' : 'bg-gray-500'}`}></span>
                     {geminiApiKey ? 'Key Configured' : 'No Key Set (Using Templates)'}
                   </span>
                 </div>
@@ -1537,7 +1537,7 @@ Tap Install and unlock the power of ${name} today!`
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-gray-300 flex justify-between">
                     <span>Gemini API Key</span>
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 text-[11px] underline">
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 text-[11px] underline">
                       Get Free Key ↗
                     </a>
                   </label>
@@ -1547,7 +1547,7 @@ Tap Install and unlock the power of ${name} today!`
                       value={geminiApiKey}
                       onChange={e => setGeminiApiKey(e.target.value)}
                       placeholder="AIzaSy..."
-                      className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white pr-10 focus:outline-none focus:border-indigo-500 font-mono"
+                      className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white pr-10 focus:outline-none focus:border-blue-500 font-mono"
                     />
                     <button
                       type="button"
@@ -1565,7 +1565,7 @@ Tap Install and unlock the power of ${name} today!`
                   <select
                     value={geminiModel}
                     onChange={e => setGeminiModel(e.target.value)}
-                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 cursor-pointer"
                   >
                     <option value="gemini-1.5-flash">gemini-1.5-flash (Fast & Recommended)</option>
                     <option value="gemini-1.5-pro">gemini-1.5-pro (High Reasoning)</option>
@@ -1576,7 +1576,7 @@ Tap Install and unlock the power of ${name} today!`
             )}
 
             {testMessage && (
-              <div className={`text-xs p-2.5 rounded-lg border flex items-center gap-2 ${testStatus === 'success' ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' : testStatus === 'error' ? 'bg-red-950/40 border-red-500/40 text-red-300' : 'bg-indigo-950/40 border-indigo-500/40 text-indigo-300'}`}>
+              <div className={`text-xs p-2.5 rounded-lg border flex items-center gap-2 ${testStatus === 'success' ? 'bg-gray-800 border-gray-600 text-gray-200' : testStatus === 'error' ? 'bg-red-950/40 border-red-500/40 text-red-300' : 'bg-gray-800/80 border-gray-600 text-gray-300'}`}>
                 {testStatus === 'testing' && <IconSpinner />}
                 <span>{testMessage}</span>
               </div>
@@ -1594,7 +1594,7 @@ Tap Install and unlock the power of ${name} today!`
               )}
               <button
                 onClick={handleSaveSettings}
-                className="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-900/30 transition-colors cursor-pointer"
+                className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-black/20 transition-colors cursor-pointer"
               >
                 Save Settings
               </button>
@@ -1611,17 +1611,17 @@ Tap Install and unlock the power of ${name} today!`
           <div className="flex bg-gray-900 p-1 rounded-xl border border-gray-800">
             <button
               onClick={() => setStudioMode('mockups')}
-              className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${studioMode === 'mockups' ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+              className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${studioMode === 'mockups' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
             >
               <span>📱 Store Mockups</span>
             </button>
             <button
               onClick={() => setStudioMode('logo')}
-              className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${studioMode === 'logo' ? 'bg-emerald-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+              className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${studioMode === 'logo' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
             >
               <IconPalette />
               <span>Logo & Icons</span>
-              <span className="text-[9px] bg-emerald-400/20 text-emerald-300 font-bold px-1 py-0.2 rounded border border-emerald-400/30">PRO</span>
+              
             </button>
           </div>
         </div>
@@ -1630,12 +1630,14 @@ Tap Install and unlock the power of ${name} today!`
           <>
             {/* Header */}
             <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-              <div>
-                <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                  <span>Store Mockup Studio</span>
-                  <span className="text-[10px] bg-indigo-900/60 text-indigo-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-500/40">AI Pro</span>
-                </h1>
-                <p className="text-[11px] text-gray-400 mt-0.5">Feature Graphic & Screen Series</p>
+              <div className="flex items-center gap-3">
+                <img src="logo.jpg" alt="Asset Generator" className="w-9 h-9 rounded-xl shadow-lg shadow-black/30 ring-1 ring-white/10 flex-shrink-0" />
+                <div>
+                  <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                    <span>Store Mockup Studio</span>
+                  </h1>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Feature Graphic & Screen Series</p>
+                </div>
               </div>
 
           <div className="flex items-center gap-2">
@@ -1645,13 +1647,13 @@ Tap Install and unlock the power of ${name} today!`
               className="relative p-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg border border-gray-700 transition-colors cursor-pointer"
             >
               <IconSettings />
-              <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ring-2 ring-gray-900 ${geminiApiKey ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+              <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ring-2 ring-gray-900 ${geminiApiKey ? 'bg-blue-500' : 'bg-gray-500'}`}></span>
             </button>
 
             <button 
               onClick={handleDownloadCurrent}
               title="Download Current PNG"
-              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg shadow-indigo-900/20 active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg shadow-black/20 active:scale-95 cursor-pointer"
             >
               <IconDownload /> PNG
             </button>
@@ -1665,7 +1667,7 @@ Tap Install and unlock the power of ${name} today!`
               <button
                 key={scr.id}
                 onClick={() => setCurrentScreenIndex(idx)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-all cursor-pointer ${currentScreenIndex === idx ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200 shadow ring-1 ring-indigo-500/50' : 'bg-gray-800/60 border-gray-700/80 text-gray-400 hover:text-gray-200'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-all cursor-pointer ${currentScreenIndex === idx ? 'bg-blue-600/30 border-blue-500 text-blue-100 shadow ring-1 ring-blue-500/30' : 'bg-gray-800/60 border-gray-700/80 text-gray-400 hover:text-gray-200'}`}
               >
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: scr.bgColor1 }}></span>
                 <span>{scr.label}</span>
@@ -1688,7 +1690,7 @@ Tap Install and unlock the power of ${name} today!`
               }]);
               setCurrentScreenIndex(screens.length);
             }}
-            className="p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-transform active:scale-95 cursor-pointer"
+            className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-transform active:scale-95 cursor-pointer"
             title="Add Mockup Screen"
           >
             <IconPlus />
@@ -1707,7 +1709,7 @@ Tap Install and unlock the power of ${name} today!`
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${activeTab === tab.id ? 'border-indigo-500 text-indigo-400 bg-gray-800/50 font-semibold' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+              className={`flex-1 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${activeTab === tab.id ? 'border-blue-500 text-blue-400 bg-gray-800/50 font-semibold' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
             >
               {tab.label}
             </button>
@@ -1722,7 +1724,7 @@ Tap Install and unlock the power of ${name} today!`
             <div className="space-y-5">
               
               {/* Bound Logo Integration Banner */}
-              <div className="bg-gradient-to-r from-indigo-950/60 to-purple-950/40 border border-indigo-500/30 p-3 rounded-xl flex items-center justify-between">
+              <div className="bg-gray-900 border border-gray-700 p-3 rounded-xl flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-800 border border-gray-700 flex items-center justify-center flex-shrink-0 shadow">
                     {boundLogoImage || logoImage ? (
@@ -1734,7 +1736,7 @@ Tap Install and unlock the power of ${name} today!`
                   <div>
                     <div className="text-xs font-bold text-white flex items-center gap-1.5">
                       <span>App Logo / Icon</span>
-                      <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-medium border border-emerald-500/30">Bound</span>
+                      <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded font-medium border border-blue-500/30">Bound</span>
                     </div>
                     <div className="text-[10px] text-gray-400">From Logo & App Icon Studio</div>
                   </div>
@@ -1743,7 +1745,7 @@ Tap Install and unlock the power of ${name} today!`
                   <button
                     type="button"
                     onClick={handleApplyLogoToCurrentScreen}
-                    className="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer shadow-sm"
+                    className="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer shadow-sm"
                     title="Place this icon as the mockup screenshot"
                   >
                     Apply Icon
@@ -1839,7 +1841,7 @@ Tap Install and unlock the power of ${name} today!`
                     <button
                       key={type.id}
                       onClick={() => updateCurrentScreen({ deviceType: type.id })}
-                      className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-colors cursor-pointer ${(current.deviceType || 'iphone') === type.id ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-colors cursor-pointer ${(current.deviceType || 'iphone') === type.id ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
                     >
                       {type.label}
                     </button>
@@ -1860,7 +1862,7 @@ Tap Install and unlock the power of ${name} today!`
                   step="0.05"
                   value={current.deviceScale}
                   onChange={e => updateCurrentScreen({ deviceScale: Number(e.target.value) })}
-                  className="w-full accent-indigo-500 cursor-pointer"
+                  className="w-full accent-blue-500 cursor-pointer"
                 />
               </div>
 
@@ -1877,7 +1879,7 @@ Tap Install and unlock the power of ${name} today!`
                   step="5"
                   value={current.yOffset}
                   onChange={e => updateCurrentScreen({ yOffset: Number(e.target.value) })}
-                  className="w-full accent-indigo-500 cursor-pointer"
+                  className="w-full accent-blue-500 cursor-pointer"
                 />
               </div>
 
@@ -1889,15 +1891,15 @@ Tap Install and unlock the power of ${name} today!`
             <div className="space-y-4">
               
               {/* Gemini Auto-Generate Box */}
-              <div className="bg-gradient-to-r from-indigo-950/80 via-purple-950/50 to-gray-900 border border-indigo-500/40 rounded-xl p-3.5 shadow-lg space-y-2.5">
+              <div className="bg-gray-900 border border-gray-700 rounded-xl p-3.5 shadow-lg space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <span className="p-1 bg-indigo-500/30 text-indigo-300 rounded-md">
+                    <span className="p-1 bg-gray-700 text-gray-300 rounded-md">
                       <IconSparkles />
                     </span>
                     <span className="text-xs font-bold text-white">Generate with Gemini AI</span>
                   </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${geminiApiKey ? 'bg-emerald-900/40 text-emerald-300 border-emerald-500/40' : 'bg-gray-800 text-gray-400 border-gray-700'}`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${geminiApiKey ? 'bg-blue-900/30 text-blue-300 border-blue-700' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
                     {geminiApiKey ? 'Gemini AI Ready' : 'Template Demo'}
                   </span>
                 </div>
@@ -1912,13 +1914,13 @@ Tap Install and unlock the power of ${name} today!`
                     value={aiAppPrompt}
                     onChange={e => setAiAppPrompt(e.target.value)}
                     placeholder="e.g. Habit Tracker, Crypto Wallet, Fitness App"
-                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                   />
 
                   <button
                     onClick={handleGenerateScreensAI}
                     disabled={isGeneratingScreensAI}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 text-white rounded-lg text-xs font-semibold shadow-lg shadow-indigo-950/50 active:scale-98 cursor-pointer disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow-lg shadow-black/30 active:scale-98 cursor-pointer disabled:opacity-50"
                   >
                     {isGeneratingScreensAI ? <><IconSpinner /> Generating Mockups with AI...</> : <><IconSparkles /> AI Auto-Fill All Screens & Theme</>}
                   </button>
@@ -1933,7 +1935,7 @@ Tap Install and unlock the power of ${name} today!`
                     <button
                       key={k}
                       onClick={() => setPresetKey(k)}
-                      className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-all cursor-pointer ${presetKey === k ? 'bg-indigo-900/40 border-indigo-500 text-indigo-200 font-semibold' : 'bg-gray-800/80 border-gray-700 text-gray-300'}`}
+                      className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-all cursor-pointer ${presetKey === k ? 'bg-blue-900/30 border-blue-500 text-blue-100 font-semibold' : 'bg-gray-800/80 border-gray-700 text-gray-300'}`}
                     >
                       <div>{p.name}</div>
                       <div className="text-[10px] opacity-60 font-mono">{p.width} × {p.height} px</div>
@@ -1949,7 +1951,7 @@ Tap Install and unlock the power of ${name} today!`
                     <IconLayout />
                     <span>Layout Design</span>
                   </label>
-                  <span className="text-[10px] px-2 py-0.5 bg-indigo-900/60 border border-indigo-700/50 text-indigo-300 rounded-md font-semibold">
+                  <span className="text-[10px] px-2 py-0.5 bg-gray-800 border border-gray-600 text-gray-300 rounded-md font-semibold">
                     {LAYOUT_COMPOSITIONS.find(c => c.id === current.layout)?.tag || 'Style'}
                   </span>
                 </div>
@@ -1959,7 +1961,7 @@ Tap Install and unlock the power of ${name} today!`
                   <select
                     value={current.layout}
                     onChange={(e) => updateCurrentScreen({ layout: e.target.value })}
-                    className="w-full bg-gray-900 border border-gray-700 hover:border-indigo-500 focus:border-indigo-500 text-gray-100 text-xs font-medium rounded-xl px-3.5 py-2.5 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer transition-colors shadow-inner"
+                    className="w-full bg-gray-900 border border-gray-700 hover:border-indigo-500 focus:border-blue-500 text-gray-100 text-xs font-medium rounded-xl px-3.5 py-2.5 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 cursor-pointer transition-colors shadow-inner"
                   >
                     {LAYOUT_COMPOSITIONS.map(comp => (
                       <option key={comp.id} value={comp.id} className="bg-gray-900 text-gray-100 py-1.5">
@@ -1986,7 +1988,7 @@ Tap Install and unlock the power of ${name} today!`
                         </div>
                         <p className="text-[11px] text-gray-400 mt-0.5">{activeLayout.desc}</p>
                       </div>
-                      <div className="text-emerald-400 p-1 bg-emerald-950/60 border border-emerald-500/30 rounded-lg">
+                      <div className="text-emerald-400 p-1 bg-emerald-950/60 border border-blue-500/30 rounded-lg">
                         <IconCheck />
                       </div>
                     </div>
@@ -1998,7 +2000,7 @@ Tap Install and unlock the power of ${name} today!`
               <button
                 onClick={handleExportAllScreens}
                 disabled={isExportingAll}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 cursor-pointer"
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 shadow-lg shadow-black/30 cursor-pointer"
               >
                 <IconDownload /> {isExportingAll ? 'Packing ZIP...' : `Export All ${screens.length} Screens + Copy (ZIP)`}
               </button>
@@ -2011,15 +2013,15 @@ Tap Install and unlock the power of ${name} today!`
             <div className="space-y-4">
               
               {/* AI Desc Card */}
-              <div className="bg-gradient-to-r from-indigo-950/80 via-purple-950/50 to-gray-900 border border-indigo-500/40 rounded-xl p-3.5 space-y-2.5">
+              <div className="bg-gray-900 border border-gray-700 rounded-xl p-3.5 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <span className="p-1 bg-indigo-500/30 text-indigo-300 rounded-md">
+                    <span className="p-1 bg-gray-700 text-gray-300 rounded-md">
                       <IconSparkles />
                     </span>
                     <span className="text-xs font-bold text-white">Gemini ASO Copywriting</span>
                   </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${geminiApiKey ? 'bg-emerald-900/40 text-emerald-300 border-emerald-500/40' : 'bg-gray-800 text-gray-400 border-gray-700'}`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${geminiApiKey ? 'bg-blue-900/30 text-blue-300 border-blue-700' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
                     {geminiApiKey ? 'Gemini AI' : 'Smart Demo'}
                   </span>
                 </div>
@@ -2039,7 +2041,7 @@ Tap Install and unlock the power of ${name} today!`
                   type="text"
                   value={appName}
                   onChange={e => setAppName(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-semibold"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 font-semibold"
                 />
               </div>
 
@@ -2189,12 +2191,15 @@ Tap Install and unlock the power of ${name} today!`
           <>
             {/* Logo Studio Sidebar Header */}
             <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-              <div>
-                <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                  <span>Logo & Icon Studio</span>
-                  <span className="text-[10px] bg-emerald-900/60 text-emerald-300 font-semibold px-2 py-0.5 rounded-full border border-emerald-500/40">v2.0</span>
-                </h1>
-                <p className="text-[11px] text-gray-400 mt-0.5">Android & Apple Asset Catalogs</p>
+              <div className="flex items-center gap-3">
+                <img src="logo.jpg" alt="Asset Generator" className="w-9 h-9 rounded-xl shadow-lg shadow-black/30 ring-1 ring-white/10 flex-shrink-0" />
+                <div>
+                  <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                    <span>Logo & Icon Studio</span>
+                    <span className="text-[10px] bg-gray-800 text-gray-300 font-semibold px-2 py-0.5 rounded-full border border-gray-600">v2.0</span>
+                  </h1>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Android & Apple Asset Catalogs</p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -2208,7 +2213,7 @@ Tap Install and unlock the power of ${name} today!`
                   onClick={handleExportAppIconsZip}
                   disabled={isExportingIcons}
                   title="Export All Android & Apple Icons ZIP"
-                  className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg shadow-emerald-900/20 active:scale-95 cursor-pointer disabled:opacity-50"
+                  className="flex items-center gap-1.5 bg-gradient-to-r bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg shadow-black/20 active:scale-95 cursor-pointer disabled:opacity-50"
                 >
                   {isExportingIcons ? <IconSpinner /> : <IconDownload />}
                   <span>ZIP</span>
@@ -2219,13 +2224,13 @@ Tap Install and unlock the power of ${name} today!`
             {/* Quick Binding Banner */}
             <div className="bg-gray-950/80 px-4 py-2 border-b border-gray-800 flex items-center justify-between">
               <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span className="w-2 h-2 rounded-full bg-blue-400"></span>
                 <span>Target: <b>android/</b> & <b>apple-devices/</b></span>
               </div>
               <button
                 type="button"
                 onClick={handleBindLogoToMockups}
-                className="flex items-center gap-1 text-[11px] font-medium text-indigo-300 hover:text-indigo-200 bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-500/40 px-2 py-1 rounded-lg cursor-pointer transition-all"
+                className="flex items-center gap-1 text-[11px] font-medium text-blue-300 hover:text-blue-200 bg-gray-800 hover:bg-gray-700 border border-gray-700 px-2 py-1 rounded-lg cursor-pointer transition-all"
                 title="Bind this logo to use across Store Mockup scenes"
               >
                 <IconLink />
@@ -2243,7 +2248,7 @@ Tap Install and unlock the power of ${name} today!`
                 <button
                   key={tab.id}
                   onClick={() => setLogoActiveTab(tab.id)}
-                  className={`flex-1 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${logoActiveTab === tab.id ? 'border-emerald-500 text-emerald-400 bg-gray-800/50 font-semibold' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+                  className={`flex-1 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${logoActiveTab === tab.id ? 'border-blue-500 text-blue-400 bg-gray-800/50 font-semibold' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
                 >
                   {tab.label}
                 </button>
@@ -2264,14 +2269,14 @@ Tap Install and unlock the power of ${name} today!`
                       <button
                         type="button"
                         onClick={() => setLogoMode('image')}
-                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${logoMode === 'image' ? 'bg-emerald-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${logoMode === 'image' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
                       >
                         Upload Image
                       </button>
                       <button
                         type="button"
                         onClick={() => setLogoMode('text')}
-                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${logoMode === 'text' ? 'bg-emerald-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${logoMode === 'text' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
                       >
                         Text / Monogram
                       </button>
@@ -2281,7 +2286,7 @@ Tap Install and unlock the power of ${name} today!`
                   {/* Upload Image Section */}
                   {logoMode === 'image' && (
                     <div className="space-y-2">
-                      <div className="relative border-2 border-dashed border-gray-700 rounded-xl p-5 hover:border-emerald-500 hover:bg-gray-800/50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer group">
+                      <div className="relative border-2 border-dashed border-gray-700 rounded-xl p-5 hover:border-blue-500 hover:bg-gray-800/50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer group">
                         <input
                           ref={logoFileInputRef}
                           type="file"
@@ -2329,7 +2334,7 @@ Tap Install and unlock the power of ${name} today!`
                           onChange={e => setLogoText(e.target.value)}
                           placeholder="POS"
                           maxLength={8}
-                          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white font-bold tracking-wider uppercase focus:outline-none focus:border-emerald-500"
+                          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white font-bold tracking-wider uppercase focus:outline-none focus:border-blue-500"
                         />
                       </div>
 
@@ -2341,7 +2346,7 @@ Tap Install and unlock the power of ${name} today!`
                           onChange={e => setLogoSubText(e.target.value)}
                           placeholder="SYSTEM"
                           maxLength={14}
-                          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white font-semibold tracking-widest uppercase focus:outline-none focus:border-emerald-500"
+                          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white font-semibold tracking-widest uppercase focus:outline-none focus:border-blue-500"
                         />
                       </div>
 
@@ -2377,7 +2382,7 @@ Tap Install and unlock the power of ${name} today!`
                         <select
                           value={logoTextFont}
                           onChange={e => setLogoTextFont(e.target.value)}
-                          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 cursor-pointer"
                         >
                           <option value="Inter, system-ui, sans-serif">Modern Sans (Inter)</option>
                           <option value="'Roboto', sans-serif">Clean Tech (Roboto)</option>
@@ -2403,7 +2408,7 @@ Tap Install and unlock the power of ${name} today!`
                         step="0.02"
                         value={logoScale}
                         onChange={e => setLogoScale(Number(e.target.value))}
-                        className="w-full accent-emerald-500 cursor-pointer"
+                        className="w-full accent-blue-500 cursor-pointer"
                       />
                     </div>
 
@@ -2420,7 +2425,7 @@ Tap Install and unlock the power of ${name} today!`
                           step="2"
                           value={logoOffsetX}
                           onChange={e => setLogoOffsetX(Number(e.target.value))}
-                          className="w-full accent-emerald-500 cursor-pointer"
+                          className="w-full accent-blue-500 cursor-pointer"
                         />
                       </div>
                       <div>
@@ -2435,7 +2440,7 @@ Tap Install and unlock the power of ${name} today!`
                           step="2"
                           value={logoOffsetY}
                           onChange={e => setLogoOffsetY(Number(e.target.value))}
-                          className="w-full accent-emerald-500 cursor-pointer"
+                          className="w-full accent-blue-500 cursor-pointer"
                         />
                       </div>
                     </div>
@@ -2446,7 +2451,7 @@ Tap Install and unlock the power of ${name} today!`
                         type="checkbox"
                         checked={logoShadow}
                         onChange={e => setLogoShadow(e.target.checked)}
-                        className="rounded accent-emerald-500 w-4 h-4 cursor-pointer"
+                        className="rounded accent-blue-500 w-4 h-4 cursor-pointer"
                       />
                     </div>
 
@@ -2456,7 +2461,7 @@ Tap Install and unlock the power of ${name} today!`
                         type="checkbox"
                         checked={logoBorder}
                         onChange={e => setLogoBorder(e.target.checked)}
-                        className="rounded accent-emerald-500 w-4 h-4 cursor-pointer"
+                        className="rounded accent-blue-500 w-4 h-4 cursor-pointer"
                       />
                     </div>
                   </div>
@@ -2475,7 +2480,7 @@ Tap Install and unlock the power of ${name} today!`
                           key={t}
                           type="button"
                           onClick={() => setLogoBgType(t)}
-                          className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-colors cursor-pointer ${logoBgType === t ? 'bg-emerald-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-colors cursor-pointer ${logoBgType === t ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
                         >
                           {t}
                         </button>
@@ -2559,7 +2564,7 @@ Tap Install and unlock the power of ${name} today!`
                             setLogoSubColor(pal.sub);
                             setLogoBgType('gradient');
                           }}
-                          className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/60 border border-gray-700/60 hover:border-emerald-500 text-left cursor-pointer transition-colors"
+                          className="flex items-center gap-2 p-2 rounded-lg bg-gray-800/60 border border-gray-700/60 hover:border-blue-500 text-left cursor-pointer transition-colors"
                         >
                           <div className="w-5 h-5 rounded flex-shrink-0" style={{ background: `linear-gradient(135deg, ${pal.c1}, ${pal.c2})` }}></div>
                           <span className="text-[11px] text-gray-200 truncate">{pal.name}</span>
@@ -2586,7 +2591,7 @@ Tap Install and unlock the power of ${name} today!`
                       <div className="pl-3 text-gray-400">• drawable/ (ic_launcher_background.xml)</div>
                       <div className="pl-3 text-gray-400">• mipmap-anydpi-v26/ (adaptive XMLs)</div>
                       <div className="pl-3 text-gray-400">• mipmap-(m, h, xh, xxh, xxxh)dpi/</div>
-                      <div className="pl-3 text-emerald-300">• playstore-icon.png (512×512)</div>
+                      <div className="pl-3 text-blue-300">• playstore-icon.png (512×512)</div>
                       <div className="text-indigo-400 font-semibold mt-1.5">📁 apple-devices/</div>
                       <div className="pl-3 text-gray-400">• AppIcon.appiconset/ (Contents.json, 1024 master)</div>
                       <div className="pl-3 text-gray-400">• Messages Icon.stickersiconset/</div>
@@ -2598,7 +2603,7 @@ Tap Install and unlock the power of ${name} today!`
                     type="button"
                     onClick={handleExportAppIconsZip}
                     disabled={isExportingIcons}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white rounded-xl text-xs font-bold shadow-xl shadow-emerald-950/40 active:scale-98 cursor-pointer disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-gradient-to-r bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-xl shadow-black/30 active:scale-98 cursor-pointer disabled:opacity-50"
                   >
                     {isExportingIcons ? <><IconSpinner /> Generating Multi-Platform Icons...</> : <><IconDownload /> Download Complete Bundle (ZIP)</>}
                   </button>
@@ -2627,7 +2632,7 @@ Tap Install and unlock the power of ${name} today!`
                     <button
                       type="button"
                       onClick={handleBindLogoToMockups}
-                      className="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-500/40 rounded-xl text-xs font-semibold cursor-pointer transition-colors"
+                      className="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-600 rounded-xl text-xs font-semibold cursor-pointer transition-colors"
                     >
                       <IconLink />
                       <span>Bind to Store Mockup Studio</span>
@@ -2687,7 +2692,7 @@ Tap Install and unlock the power of ${name} today!`
                 <div className="text-xs font-semibold text-gray-300 flex items-center gap-2 px-1">
                   <span>{currentScreenIndex + 1}/{screens.length}</span>
                   <span className="text-gray-600">|</span>
-                  <span className="text-indigo-400 font-medium max-w-[90px] truncate">{current.label}</span>
+                  <span className="text-blue-400 font-medium max-w-[90px] truncate">{current.label}</span>
                   <span className="text-gray-600">|</span>
                   <span className="text-gray-500 font-mono text-[11px]">{width}×{height}</span>
                 </div>
@@ -2736,7 +2741,7 @@ Tap Install and unlock the power of ${name} today!`
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 hover:text-white border border-indigo-500/40 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white border border-gray-600 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
                 title="Add or replace mockup image"
               >
                 <IconImage />
@@ -2759,7 +2764,7 @@ Tap Install and unlock the power of ${name} today!`
                 <button
                   type="button"
                   onClick={handleResetZoom}
-                  className="px-2 py-0.5 text-[11px] font-mono font-medium text-indigo-300 hover:text-white rounded hover:bg-gray-800 cursor-pointer"
+                  className="px-2 py-0.5 text-[11px] font-mono font-medium text-gray-300 hover:text-white rounded hover:bg-gray-800 cursor-pointer"
                   title="Click to Reset Zoom (100%)"
                 >
                   {Math.round(zoomLevel * 100)}%
@@ -2816,7 +2821,7 @@ Tap Install and unlock the power of ${name} today!`
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute inset-0 m-auto w-44 h-11 flex items-center justify-center gap-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-xl shadow-2xl backdrop-blur font-medium text-xs border border-indigo-400/40 pointer-events-auto cursor-pointer transition-transform hover:scale-105"
+                    className="absolute inset-0 m-auto w-44 h-11 flex items-center justify-center gap-2 bg-blue-600/90 hover:bg-blue-500 text-white rounded-xl shadow-2xl backdrop-blur font-medium text-xs border border-blue-400/30 pointer-events-auto cursor-pointer transition-transform hover:scale-105"
                   >
                     <IconImage />
                     <span>Click to Add Image</span>
@@ -2826,8 +2831,8 @@ Tap Install and unlock the power of ${name} today!`
 
               {/* Drag & Drop Visual Overlay */}
               {isDragOverCanvas && (
-                <div className="absolute inset-4 bg-indigo-950/85 border-2 border-dashed border-indigo-400 rounded-2xl flex flex-col items-center justify-center z-30 pointer-events-none backdrop-blur-sm animate-pulse">
-                  <div className="p-3.5 bg-indigo-600/40 text-indigo-200 rounded-full mb-2">
+                <div className="absolute inset-4 bg-blue-950/80 border-2 border-dashed border-blue-500 rounded-2xl flex flex-col items-center justify-center z-30 pointer-events-none backdrop-blur-sm animate-pulse">
+                  <div className="p-3.5 bg-blue-600/40 text-blue-100 rounded-full mb-2">
                     <IconUpload />
                   </div>
                   <p className="text-sm font-bold text-white">Drop image here to add to mockup</p>
@@ -2872,7 +2877,7 @@ Tap Install and unlock the power of ${name} today!`
                   onClick={() => setPreviewShape('android-round')}
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
                     previewShape === 'android-round'
-                      ? 'bg-emerald-600 text-white shadow-sm'
+                      ? 'bg-blue-600 text-white shadow-sm'
                       : 'text-gray-400 hover:text-white hover:bg-gray-800'
                   }`}
                   title="Google Pixel Adaptive Round Icon Preview"
@@ -2914,7 +2919,7 @@ Tap Install and unlock the power of ${name} today!`
               <button
                 type="button"
                 onClick={handleBindLogoToMockups}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-semibold shadow-md active:scale-95 cursor-pointer transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r bg-blue-600 hover:bg-blue-500 hover:to-teal-500 text-white rounded-xl text-xs font-semibold shadow-md active:scale-95 cursor-pointer transition-all"
                 title="Bind this logo to your Store Mockups so you can inject it with 1-click"
               >
                 <IconCheck />
@@ -2925,7 +2930,7 @@ Tap Install and unlock the power of ${name} today!`
               <button
                 type="button"
                 onClick={() => logoFileInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 hover:text-white border border-indigo-500/40 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white border border-gray-600 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
                 title="Upload custom logo graphic (PNG, SVG, JPG)"
               >
                 <IconUpload />
@@ -2948,7 +2953,7 @@ Tap Install and unlock the power of ${name} today!`
                 <button
                   type="button"
                   onClick={handleResetZoom}
-                  className="px-2 py-0.5 text-[11px] font-mono font-medium text-indigo-300 hover:text-white rounded hover:bg-gray-800 cursor-pointer"
+                  className="px-2 py-0.5 text-[11px] font-mono font-medium text-gray-300 hover:text-white rounded hover:bg-gray-800 cursor-pointer"
                   title="Click to Reset Zoom (100%)"
                 >
                   {Math.round(zoomLevel * 100)}%
@@ -3016,7 +3021,7 @@ Tap Install and unlock the power of ${name} today!`
                   <button
                     type="button"
                     onClick={() => logoFileInputRef.current?.click()}
-                    className="absolute inset-0 m-auto w-48 h-12 flex items-center justify-center gap-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-xl shadow-2xl backdrop-blur font-medium text-xs border border-indigo-400/40 pointer-events-auto cursor-pointer transition-transform hover:scale-105"
+                    className="absolute inset-0 m-auto w-48 h-12 flex items-center justify-center gap-2 bg-blue-600/90 hover:bg-blue-500 text-white rounded-xl shadow-2xl backdrop-blur font-medium text-xs border border-blue-400/30 pointer-events-auto cursor-pointer transition-transform hover:scale-105"
                   >
                     <IconUpload />
                     <span>Upload Logo Graphic</span>
@@ -3026,8 +3031,8 @@ Tap Install and unlock the power of ${name} today!`
 
               {/* Drag & Drop Visual Overlay for Logo Studio */}
               {isDragOverCanvas && (
-                <div className="absolute inset-4 bg-indigo-950/85 border-2 border-dashed border-indigo-400 rounded-2xl flex flex-col items-center justify-center z-30 pointer-events-none backdrop-blur-sm animate-pulse">
-                  <div className="p-3.5 bg-indigo-600/40 text-indigo-200 rounded-full mb-2">
+                <div className="absolute inset-4 bg-blue-950/80 border-2 border-dashed border-blue-500 rounded-2xl flex flex-col items-center justify-center z-30 pointer-events-none backdrop-blur-sm animate-pulse">
+                  <div className="p-3.5 bg-blue-600/40 text-blue-100 rounded-full mb-2">
                     <IconUpload />
                   </div>
                   <p className="text-sm font-bold text-white">Drop logo graphic here</p>
@@ -3040,7 +3045,7 @@ Tap Install and unlock the power of ${name} today!`
             <div className="mt-2 text-[11px] text-gray-400 flex flex-wrap items-center justify-between gap-3 w-full max-w-4xl px-4 py-2 bg-gray-900/70 backdrop-blur rounded-xl border border-gray-800/80 z-10">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-gray-300">Target Preview:</span>
-                <span className="px-2 py-0.5 bg-gray-800 text-indigo-300 rounded font-mono text-[10px] uppercase font-bold">{previewShape}</span>
+                <span className="px-2 py-0.5 bg-gray-800 text-gray-300 rounded font-mono text-[10px] uppercase font-bold">{previewShape}</span>
                 <span className="text-gray-600">|</span>
                 <span>1024×1024 Master</span>
               </div>
@@ -3049,7 +3054,7 @@ Tap Install and unlock the power of ${name} today!`
                 <button
                   type="button"
                   onClick={handleBindLogoToMockups}
-                  className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                  className="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
                 >
                   🔗 Bind to Mockups
                 </button>
@@ -3057,7 +3062,7 @@ Tap Install and unlock the power of ${name} today!`
                   type="button"
                   onClick={handleExportAppIconsZip}
                   disabled={isExportingIcons}
-                  className="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                  className="px-2.5 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 border border-gray-600 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
                 >
                   {isExportingIcons ? 'Exporting...' : '📦 Export Asset Catalog ZIP'}
                 </button>
