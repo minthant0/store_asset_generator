@@ -109,6 +109,16 @@ const IconLayout = () => (
     <line x1="9" x2="9" y1="21" y2="9"/>
   </svg>
 );
+const IconGithub = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+  </svg>
+);
+const IconExternalLink = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+  </svg>
+);
 
 const LOGO_PALETTES = [
   { name: 'POS Modern Blue', c1: '#0f172a', c2: '#0284c7', angle: 'diagonal', text: '#ffffff', sub: '#38bdf8' },
@@ -233,7 +243,7 @@ export default function App() {
   const [height, setHeight] = useState(PRESETS['play-feature'].height);
 
   // Settings (Gemini & Download Location)
-  const [settingsTab, setSettingsTab] = useState('download'); // 'download' | 'gemini'
+  const [settingsTab, setSettingsTab] = useState('download'); // 'download' | 'gemini' | 'developer'
   const [downloadPath, setDownloadPath] = useState(() => localStorage.getItem('download_path_location') || 'Downloads/StoreMockups');
   const [autoSubfolder, setAutoSubfolder] = useState(() => localStorage.getItem('download_auto_subfolder') !== 'false');
   const [directoryHandle, setDirectoryHandle] = useState(null);
@@ -241,7 +251,19 @@ export default function App() {
 
   // Gemini Settings
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
-  const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('gemini_model') || 'gemini-1.5-flash');
+  const [geminiModel, setGeminiModel] = useState(() => {
+    const saved = localStorage.getItem('gemini_model');
+    if (!saved || saved.includes('1.5') || saved.includes('2.0')) {
+      return 'gemini-3.6-flash';
+    }
+    return saved;
+  });
+  const [availableModels, setAvailableModels] = useState([
+    { id: 'gemini-3.6-flash', name: 'gemini-3.6-flash (Latest & Recommended)' },
+    { id: 'gemini-2.5-flash', name: 'gemini-2.5-flash' },
+    { id: 'gemini-2.5-pro', name: 'gemini-2.5-pro' }
+  ]);
+  const [isFetchingModels, setIsFetchingModels] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [testStatus, setTestStatus] = useState(null);
@@ -366,6 +388,40 @@ Tap Install and launch your next high-converting store listing today!`
   };
 
 
+  const fetchAvailableModels = async (keyToUse) => {
+    const key = (keyToUse || geminiApiKey).trim();
+    if (!key) return;
+    setIsFetchingModels(true);
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      const data = await res.json();
+      if (data.models && Array.isArray(data.models)) {
+        const supported = data.models
+          .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+          .map(m => {
+            const cleanId = m.name.replace(/^models\//, '');
+            return {
+              id: cleanId,
+              name: `${cleanId}${cleanId.includes('3.6') || cleanId.includes('flash') ? ' (Recommended)' : ''}`
+            };
+          });
+        if (supported.length > 0) {
+          setAvailableModels(supported);
+          if (!supported.some(m => m.id === geminiModel)) {
+            const best = supported.find(m => m.id.includes('3.6') || m.id.includes('flash'))?.id || supported[0].id;
+            setGeminiModel(best);
+            localStorage.setItem('gemini_model', best);
+          }
+          setTestMessage(`Loaded ${supported.length} available models from Google AI.`);
+          setTestStatus('success');
+        }
+      }
+    } catch (err) {
+      console.warn('Could not list models:', err);
+    }
+    setIsFetchingModels(false);
+  };
+
   const handleTestGeminiKey = async () => {
     const key = geminiApiKey.trim();
     if (!key) {
@@ -376,19 +432,61 @@ Tap Install and launch your next high-converting store listing today!`
     setTestStatus('testing');
     setTestMessage('Testing connection to Gemini API...');
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${key}`, {
+      let targetModel = geminiModel;
+      if (targetModel.includes('1.5') || targetModel.includes('2.0')) {
+        targetModel = 'gemini-3.6-flash';
+        setGeminiModel('gemini-3.6-flash');
+      }
+
+      let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: 'Respond with VALID only.' }] }]
         })
       });
-      const data = await res.json();
+      let data = await res.json();
+
+      // If model deprecated or not found, automatically query ModelService.ListModels
+      if (data.error && (data.error.message?.includes('not found') || data.error.message?.includes('no longer available') || data.error.code === 404)) {
+        try {
+          const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+          const listData = await listRes.json();
+          if (listData.models && Array.isArray(listData.models)) {
+            const supported = listData.models
+              .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+              .map(m => {
+                const cleanId = m.name.replace(/^models\//, '');
+                return {
+                  id: cleanId,
+                  name: `${cleanId}${cleanId.includes('3.6') || cleanId.includes('flash') ? ' (Recommended)' : ''}`
+                };
+              });
+            if (supported.length > 0) {
+              setAvailableModels(supported);
+              const bestModel = supported.find(m => m.id.includes('3.6') || m.id.includes('flash'))?.id || supported[0].id;
+              targetModel = bestModel;
+              setGeminiModel(bestModel);
+              
+              // Retry with the active model
+              res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${key}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{ parts: [{ text: 'Respond with VALID only.' }] }]
+                })
+              });
+              data = await res.json();
+            }
+          }
+        } catch (_) {}
+      }
+
       if (data.error) throw new Error(data.error.message || 'Invalid API Key');
       localStorage.setItem('gemini_api_key', key);
-      localStorage.setItem('gemini_model', geminiModel);
+      localStorage.setItem('gemini_model', targetModel);
       setTestStatus('success');
-      setTestMessage('Connected! Gemini API key is valid.');
+      setTestMessage(`Connected! Successfully verified using ${targetModel}.`);
     } catch (err) {
       setTestStatus('error');
       setTestMessage(err.message || 'Failed to authenticate.');
@@ -414,7 +512,12 @@ Tap Install and launch your next high-converting store listing today!`
     }
     parts.push({ text: prompt });
 
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${key}`, {
+    let activeModel = geminiModel;
+    if (activeModel.includes('1.5') || activeModel.includes('2.0')) {
+      activeModel = 'gemini-3.6-flash';
+    }
+
+    let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${key}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -422,7 +525,25 @@ Tap Install and launch your next high-converting store listing today!`
         generationConfig: { temperature: 0.7, maxOutputTokens: 3000 }
       })
     });
-    const data = await res.json();
+    let data = await res.json();
+
+    if (data.error && (data.error.message?.includes('not found') || data.error.message?.includes('no longer available'))) {
+      const fallback = 'gemini-3.6-flash';
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${fallback}:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 3000 }
+        })
+      });
+      data = await res.json();
+      if (!data.error) {
+        setGeminiModel(fallback);
+        localStorage.setItem('gemini_model', fallback);
+      }
+    }
+
     if (data.error) throw new Error(data.error.message || 'Gemini error');
     return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
   };
@@ -1554,11 +1675,11 @@ Get started today and elevate your experience.`
             </div>
 
             {/* Settings Tab Selector */}
-            <div className="flex bg-gray-950 p-1 rounded-xl border border-gray-800">
+            <div className="flex bg-gray-950 p-1 rounded-xl border border-gray-800 gap-1">
               <button
                 type="button"
                 onClick={() => setSettingsTab('download')}
-                className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${settingsTab === 'download' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${settingsTab === 'download' ? 'bg-indigo-600 text-white shadow font-semibold' : 'text-gray-400 hover:text-gray-200'}`}
               >
                 <IconFolder />
                 <span>Download Path</span>
@@ -1566,10 +1687,18 @@ Get started today and elevate your experience.`
               <button
                 type="button"
                 onClick={() => setSettingsTab('gemini')}
-                className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${settingsTab === 'gemini' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'}`}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${settingsTab === 'gemini' ? 'bg-indigo-600 text-white shadow font-semibold' : 'text-gray-400 hover:text-gray-200'}`}
               >
                 <IconSparkles />
-                <span>Gemini AI Key</span>
+                <span>Gemini AI</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSettingsTab('developer')}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${settingsTab === 'developer' ? 'bg-indigo-600 text-white shadow font-semibold' : 'text-gray-400 hover:text-gray-200'}`}
+              >
+                <IconGithub />
+                <span>Developer</span>
               </button>
             </div>
 
@@ -1679,16 +1808,90 @@ Get started today and elevate your experience.`
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-gray-300">Gemini Model</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-gray-300">Gemini Model</label>
+                    <button
+                      type="button"
+                      onClick={() => fetchAvailableModels()}
+                      disabled={isFetchingModels || !geminiApiKey.trim()}
+                      className="text-[10px] text-indigo-400 hover:text-indigo-300 cursor-pointer disabled:opacity-40 transition-colors"
+                    >
+                      {isFetchingModels ? 'Detecting...' : '↻ Auto-Detect Models'}
+                    </button>
+                  </div>
                   <select
                     value={geminiModel}
                     onChange={e => setGeminiModel(e.target.value)}
                     className="w-full bg-gray-950 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 cursor-pointer"
                   >
-                    <option value="gemini-1.5-flash">gemini-1.5-flash (Fast & Recommended)</option>
-                    <option value="gemini-1.5-pro">gemini-1.5-pro (High Reasoning)</option>
-                    <option value="gemini-2.0-flash">gemini-2.0-flash (Latest)</option>
+                    <option value="gemini-3.6-flash">gemini-3.6-flash (Latest & Recommended)</option>
+                    <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                    <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                    {availableModels.filter(m => !['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.5-pro'].includes(m.id)).map(m => (
+                      <option key={m.id} value={m.id}>{m.name || m.id}</option>
+                    ))}
                   </select>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 3: Developer Profile */}
+            {settingsTab === 'developer' && (
+              <div className="space-y-4 pt-1">
+                <div className="bg-gray-950 p-4 rounded-xl border border-gray-800 space-y-3">
+                  <div className="flex items-center gap-3.5">
+                    <img
+                      src="https://github.com/minthant0.png"
+                      alt="Min Thant"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://avatars.githubusercontent.com/u/9919?s=200&v=4';
+                      }}
+                      className="w-14 h-14 rounded-2xl ring-2 ring-indigo-500/40 shadow-lg object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-white truncate">Min Thant</h3>
+                        <span className="text-[10px] bg-indigo-950 text-indigo-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-700/60">
+                          Developer
+                        </span>
+                      </div>
+                      <p className="text-xs text-indigo-400 font-mono mt-0.5">@minthant0</p>
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        Creator & Developer of Store Asset Generator Studio
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-gray-800/80 flex flex-wrap gap-1.5">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-900 text-gray-300 border border-gray-800">Flutter</span>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-900 text-gray-300 border border-gray-800">React</span>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-900 text-gray-300 border border-gray-800">Gemini AI</span>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-900 text-gray-300 border border-gray-800">Mobile Tooling</span>
+                  </div>
+                </div>
+
+                <a
+                  href="https://github.com/minthant0"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xs font-semibold border border-gray-700 shadow-md hover:border-gray-600 transition-all cursor-pointer"
+                >
+                  <IconGithub />
+                  <span>Visit GitHub Profile (@minthant0)</span>
+                  <IconExternalLink />
+                </a>
+
+                <div className="text-center text-[11px] text-gray-500 pt-1">
+                  Connect on GitHub:{' '}
+                  <a
+                    href="https://github.com/minthant0"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-400 hover:underline font-mono"
+                  >
+                    https://github.com/minthant0
+                  </a>
                 </div>
               </div>
             )}
@@ -1712,10 +1915,24 @@ Get started today and elevate your experience.`
               )}
               <button
                 onClick={handleSaveSettings}
-                className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-black/20 transition-colors cursor-pointer"
+                className="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-black/20 transition-colors cursor-pointer"
               >
                 Save Settings
               </button>
+            </div>
+
+            {/* Developer Footer Attribution */}
+            <div className="pt-2 border-t border-gray-800/80 flex items-center justify-between text-[11px] text-gray-500">
+              <span>Store Asset Generator Studio</span>
+              <a
+                href="https://github.com/minthant0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-gray-400 hover:text-indigo-400 transition-colors"
+              >
+                <IconGithub />
+                <span>@minthant0</span>
+              </a>
             </div>
           </div>
         </div>
@@ -1815,23 +2032,29 @@ Get started today and elevate your experience.`
           </button>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-gray-800 bg-gray-900/50">
-          {[
-            { id: 'size', label: 'Layout & AI' },
-            { id: 'text', label: 'Text' },
-            { id: 'mockup', label: 'Mockup' },
-            { id: 'bg', label: 'Background' },
-            { id: 'descriptions', label: 'Descriptions' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${activeTab === tab.id ? 'border-blue-500 text-blue-400 bg-gray-800/50 font-semibold' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Navigation Tabs (Flexible Space UI) */}
+        <div className="p-2 border-b border-gray-800/80 bg-gray-950/40">
+          <div className="flex items-center gap-1 p-1 bg-gray-900/90 rounded-xl border border-gray-800 overflow-x-auto scrollbar-none">
+            {[
+              { id: 'size', label: 'Layout & AI' },
+              { id: 'text', label: 'Text' },
+              { id: 'mockup', label: 'Mockup' },
+              { id: 'bg', label: 'Background' },
+              { id: 'descriptions', label: 'Descriptions' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 min-w-fit px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-center whitespace-nowrap cursor-pointer ${
+                  activeTab === tab.id
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-950/60 font-semibold ring-1 ring-white/10'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/60'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Tab Body */}
@@ -2407,21 +2630,27 @@ Get started today and elevate your experience.`
               </button>
             </div>
 
-            {/* Logo Studio Tabs */}
-            <div className="flex border-b border-gray-800 bg-gray-900/50">
-              {[
-                { id: 'design', label: 'Logo Design' },
-                { id: 'background', label: 'Background' },
-                { id: 'export', label: 'Catalog Export' }
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setLogoActiveTab(tab.id)}
-                  className={`flex-1 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer ${logoActiveTab === tab.id ? 'border-blue-500 text-blue-400 bg-gray-800/50 font-semibold' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+            {/* Logo Studio Tabs (Flexible Space UI) */}
+            <div className="p-2 border-b border-gray-800/80 bg-gray-950/40">
+              <div className="flex items-center gap-1 p-1 bg-gray-900/90 rounded-xl border border-gray-800 overflow-x-auto scrollbar-none">
+                {[
+                  { id: 'design', label: 'Logo Design' },
+                  { id: 'background', label: 'Background' },
+                  { id: 'export', label: 'Catalog Export' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setLogoActiveTab(tab.id)}
+                    className={`flex-1 min-w-fit px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-center whitespace-nowrap cursor-pointer ${
+                      logoActiveTab === tab.id
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-950/60 font-semibold ring-1 ring-white/10'
+                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/60'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Logo Studio Tab Content */}
