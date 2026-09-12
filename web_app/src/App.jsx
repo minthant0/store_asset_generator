@@ -316,6 +316,10 @@ export default function App() {
   const [isGeneratingDescAI, setIsGeneratingDescAI] = useState(false);
   const [aiToast, setAiToast] = useState('');
 
+  // AI Logo Generation
+  const [aiLogoPrompt, setAiLogoPrompt] = useState('');
+  const [isGeneratingLogoAI, setIsGeneratingLogoAI] = useState(false);
+
   // Descriptions
   const [appName, setAppName] = useState('ZenFlow');
   const [shortDescMode, setShortDescMode] = useState('play-80');
@@ -1213,6 +1217,66 @@ Get started today and elevate your experience.`
     logoBorderColor
   ]);
 
+  // --- Dominant Color Extractor (pixel sampling) ---
+  const extractDominantColor = (img) => {
+    try {
+      const size = 80; // sample at low res for speed
+      const off = document.createElement('canvas');
+      off.width = size;
+      off.height = size;
+      const ctx = off.getContext('2d');
+      ctx.drawImage(img, 0, 0, size, size);
+      const { data } = ctx.getImageData(0, 0, size, size);
+
+      // Bucket pixels by quantized hue (ignore near-white, near-black, transparent)
+      const buckets = {};
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+        if (a < 40) continue; // skip transparent
+        const brightness = (r + g + b) / 3;
+        if (brightness > 230) continue; // skip near-white
+        if (brightness < 25) continue;  // skip near-black
+        // Quantize to 32-step buckets for grouping similar colors
+        const qr = Math.round(r / 32) * 32;
+        const qg = Math.round(g / 32) * 32;
+        const qb = Math.round(b / 32) * 32;
+        const key = `${qr},${qg},${qb}`;
+        buckets[key] = (buckets[key] || 0) + 1;
+      }
+
+      // Find most frequent bucket
+      let best = null, bestCount = 0;
+      for (const [key, count] of Object.entries(buckets)) {
+        if (count > bestCount) { bestCount = count; best = key; }
+      }
+
+      if (!best) return null;
+      const [r, g, b] = best.split(',').map(Number);
+
+      // Convert to hex
+      const toHex = (v) => v.toString(16).padStart(2, '0');
+      const hex = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+
+      // Derive a darker complementary shade (darken by ~60%)
+      const darken = (v) => Math.max(0, Math.round(v * 0.25));
+      const darkerHex = `#${toHex(darken(r))}${toHex(darken(g))}${toHex(darken(b))}`;
+
+      return { hex, darkerHex };
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const applyBgFromImage = (img) => {
+    const colors = extractDominantColor(img);
+    if (colors) {
+      setLogoBgType('gradient');
+      setLogoBgColor1(colors.hex);
+      setLogoBgColor2(colors.darkerHex);
+      setLogoBgAngle('diagonal');
+    }
+  };
+
   const handleUploadLogo = (e) => {
     const file = e.target?.files ? e.target.files[0] : (e instanceof File ? e : null);
     if (!file) return;
@@ -1222,12 +1286,68 @@ Get started today and elevate your experience.`
       img.onload = () => {
         setLogoImage(img);
         setLogoMode('image');
-        setAiToast('📷 Logo image uploaded successfully!');
-        setTimeout(() => setAiToast(''), 3000);
+        applyBgFromImage(img);
+        setAiToast('📷 Logo added — background auto-matched to logo colors!');
+        setTimeout(() => setAiToast(''), 3500);
       };
       img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
+  };
+
+  // --- AI SVG Logo Generation ---
+  const handleGenerateLogoAI = async () => {
+    const prompt = aiLogoPrompt.trim() || appName.trim() || 'MyApp';
+    setIsGeneratingLogoAI(true);
+    setAiToast('✨ Generating AI logo SVG...');
+    try {
+      const systemPrompt = `You are a professional logo designer. Generate a clean, modern SVG logo icon for an app called "${prompt}".
+
+Rules:
+- Output ONLY raw SVG markup, starting with <svg and ending with </svg>. No explanations, no markdown, no code fences.
+- viewBox must be "0 0 100 100". Width and height must be "100".
+- Use simple bold geometric shapes: circles, rectangles, paths, polygons.
+- Include 1-3 shapes maximum. Keep it clean and minimal (think iOS app icon style).
+- Use vibrant, modern colors (gradients encouraged via <defs><linearGradient>).
+- DO NOT include text elements in the SVG.
+- The design must look great as a small icon.
+
+Example format:
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4f46e5"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs><circle cx="50" cy="50" r="45" fill="url(#g)"/><polygon points="38,30 70,50 38,70" fill="white"/></svg>`;
+
+      const rawSvg = await callGemini(systemPrompt);
+
+      // Extract SVG from the response
+      const svgMatch = rawSvg.match(/<svg[\s\S]*?<\/svg>/i);
+      if (!svgMatch) throw new Error('No valid SVG found in AI response');
+      const svgText = svgMatch[0];
+
+      // Render SVG → Image → apply to logo canvas
+      const blob = new Blob([svgText], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        setLogoImage(img);
+        setLogoMode('image');
+        URL.revokeObjectURL(url);
+
+        // Auto-detect dominant color from the rendered SVG pixels
+        applyBgFromImage(img);
+
+        setAiToast('🎨 AI logo generated & background auto-matched!');
+        setTimeout(() => setAiToast(''), 4000);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        throw new Error('Failed to render generated SVG');
+      };
+      img.src = url;
+    } catch (err) {
+      console.error('AI logo generation error:', err);
+      setAiToast(`⚠️ ${err.message === 'NO_KEY' ? 'Add Gemini API key in Settings first.' : err.message}`);
+      setTimeout(() => setAiToast(''), 5000);
+    }
+    setIsGeneratingLogoAI(false);
   };
 
   const handleBindLogoToMockups = () => {
@@ -2759,7 +2879,70 @@ Get started today and elevate your experience.`
               {/* Tab: Logo Design */}
               {logoActiveTab === 'design' && (
                 <div className="space-y-4">
-                  
+
+                  {/* AI Generate Logo Panel */}
+                  <div className="bg-gray-900 border border-gray-700 rounded-xl p-3.5 shadow-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="p-1 bg-indigo-600/30 text-indigo-400 rounded-md">
+                          <IconSparkles />
+                        </span>
+                        <span className="text-xs font-bold text-white">AI Generate Logo</span>
+                      </div>
+                      <span className={`text-[10px] px-2.5 py-0.5 rounded-full border flex items-center gap-1.5 font-medium ${
+                        isGeminiVerified
+                          ? 'bg-emerald-950/60 text-emerald-300 border-emerald-700/60'
+                          : geminiApiKey
+                          ? 'bg-amber-950/60 text-amber-300 border-amber-700/60'
+                          : 'bg-gray-800 text-gray-400 border-gray-700'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          isGeminiVerified ? 'bg-emerald-400 animate-pulse' : geminiApiKey ? 'bg-amber-400' : 'bg-gray-500'
+                        }`} />
+                        {isGeminiVerified ? 'Gemini Ready' : geminiApiKey ? 'Needs Verify' : 'Key Required'}
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-gray-400 leading-snug">
+                      Describe your app and AI will generate a unique SVG icon and auto-apply it to the logo frame.
+                    </p>
+
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={aiLogoPrompt}
+                        onChange={e => setAiLogoPrompt(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && isGeminiVerified && !isGeneratingLogoAI && handleGenerateLogoAI()}
+                        placeholder={`e.g. ${appName || 'Fitness tracker, payment app...'}`}
+                        className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                      />
+                      <button
+                        onClick={() => {
+                          if (isGeminiVerified) {
+                            handleGenerateLogoAI();
+                          } else {
+                            setSettingsTab('gemini');
+                            setIsSettingsOpen(true);
+                          }
+                        }}
+                        disabled={isGeneratingLogoAI}
+                        className={`w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-semibold shadow-lg active:scale-98 cursor-pointer transition-all disabled:opacity-60 ${
+                          isGeminiVerified
+                            ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 text-white shadow-indigo-950/50'
+                            : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700'
+                        }`}
+                      >
+                        {isGeneratingLogoAI ? (
+                          <><IconSpinner /> Generating SVG Logo...</>
+                        ) : isGeminiVerified ? (
+                          <><IconSparkles /> Generate & Auto-Apply Logo</>
+                        ) : (
+                          <><IconSettings /> Connect Gemini in Settings</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Type Switcher: Upload Image vs Monogram */}
                   <div>
                     <label className="block text-xs font-medium text-gray-300 mb-2">Logo Source</label>
