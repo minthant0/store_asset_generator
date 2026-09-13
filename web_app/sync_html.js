@@ -17,7 +17,8 @@ const distHtml = fs.readFileSync(distHtmlPath, 'utf8');
 const targets = [
   path.join(rootDir, 'assets', 'web_app', 'index.html'),
   path.join(rootDir, 'web', 'asset_generator.html'),
-  path.join(rootDir, 'build', 'web', 'asset_generator.html')
+  path.join(rootDir, 'build', 'web', 'asset_generator.html'),
+  path.join(rootDir, 'build', 'web', 'assets', 'assets', 'web_app', 'index.html')
 ];
 
 for (const target of targets) {

@@ -39,8 +39,8 @@ const IconEye = () => (
 const IconEyeOff = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
 );
-const IconClose = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+const IconClose = ({ size = 16, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 );
 const IconSpinner = () => (
   <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -1423,10 +1423,38 @@ Example format:
     const ctx = off.getContext('2d');
     drawIconToCanvas(ctx, 1024, 1024, { shape: 'flat' });
     const link = document.createElement('a');
-    link.download = 'Icon-App-1024x1024@1x.png';
+    link.download = 'icon-ios-1024x1024.png';
     link.href = off.toDataURL('image/png');
     link.click();
-    setAiToast('💾 Downloaded Apple 1024×1024 Master Icon');
+    setAiToast('💾 Downloaded icon-ios-1024x1024.png (Apple iOS Master)');
+    setTimeout(() => setAiToast(''), 3000);
+  };
+
+  const handleDownloadMacMasterIcon = () => {
+    const off = document.createElement('canvas');
+    off.width = 1024;
+    off.height = 1024;
+    const ctx = off.getContext('2d');
+    drawIconToCanvas(ctx, 1024, 1024, { shape: 'flat' });
+    const link = document.createElement('a');
+    link.download = 'icon-mac-512x512@2x.png';
+    link.href = off.toDataURL('image/png');
+    link.click();
+    setAiToast('💾 Downloaded icon-mac-512x512@2x.png (macOS 1024px)');
+    setTimeout(() => setAiToast(''), 3000);
+  };
+
+  const handleDownloadWatchMasterIcon = () => {
+    const off = document.createElement('canvas');
+    off.width = 1024;
+    off.height = 1024;
+    const ctx = off.getContext('2d');
+    drawIconToCanvas(ctx, 1024, 1024, { shape: 'flat' });
+    const link = document.createElement('a');
+    link.download = 'icon-watchos-1024x1024.png';
+    link.href = off.toDataURL('image/png');
+    link.click();
+    setAiToast('💾 Downloaded icon-watchos-1024x1024.png (watchOS Master)');
     setTimeout(() => setAiToast(''), 3000);
   };
 
@@ -1487,11 +1515,91 @@ Example format:
 </vector>`;
       drawableFolder.file("ic_launcher_background.xml", bgXml);
 
-      // 2. Apple Devices Directory matching reference structure
+      // 2. Apple Devices Directory matching reference structure and full 46-asset catalog
       const appleFolder = zip.folder("apple-devices");
       const appIconSet = appleFolder.folder("AppIcon.appiconset");
 
-      const iosIcons = [
+      const appleIcons = [
+        // iOS Universal (16 assets)
+        { idiom: "universal", platform: "ios", scale: "2x", size: "20x20", filename: "icon-ios-20x20@2x.png", pixelSize: 40 },
+        { idiom: "universal", platform: "ios", scale: "3x", size: "20x20", filename: "icon-ios-20x20@3x.png", pixelSize: 60 },
+        { idiom: "universal", platform: "ios", scale: "2x", size: "29x29", filename: "icon-ios-29x29@2x.png", pixelSize: 58 },
+        { idiom: "universal", platform: "ios", scale: "3x", size: "29x29", filename: "icon-ios-29x29@3x.png", pixelSize: 87 },
+        { idiom: "universal", platform: "ios", scale: "2x", size: "38x38", filename: "icon-ios-38x38@2x.png", pixelSize: 76 },
+        { idiom: "universal", platform: "ios", scale: "3x", size: "38x38", filename: "icon-ios-38x38@3x.png", pixelSize: 114 },
+        { idiom: "universal", platform: "ios", scale: "2x", size: "40x40", filename: "icon-ios-40x40@2x.png", pixelSize: 80 },
+        { idiom: "universal", platform: "ios", scale: "3x", size: "40x40", filename: "icon-ios-40x40@3x.png", pixelSize: 120 },
+        { idiom: "universal", platform: "ios", scale: "2x", size: "60x60", filename: "icon-ios-60x60@2x.png", pixelSize: 120 },
+        { idiom: "universal", platform: "ios", scale: "3x", size: "60x60", filename: "icon-ios-60x60@3x.png", pixelSize: 180 },
+        { idiom: "universal", platform: "ios", scale: "2x", size: "64x64", filename: "icon-ios-64x64@2x.png", pixelSize: 128 },
+        { idiom: "universal", platform: "ios", scale: "3x", size: "64x64", filename: "icon-ios-64x64@3x.png", pixelSize: 192 },
+        { idiom: "universal", platform: "ios", scale: "2x", size: "68x68", filename: "icon-ios-68x68@2x.png", pixelSize: 136 },
+        { idiom: "universal", platform: "ios", scale: "2x", size: "76x76", filename: "icon-ios-76x76@2x.png", pixelSize: 152 },
+        { idiom: "universal", platform: "ios", scale: "2x", size: "83.5x83.5", filename: "icon-ios-83.5x83.5@2x.png", pixelSize: 167 },
+        { idiom: "universal", platform: "ios", size: "1024x1024", filename: "icon-ios-1024x1024.png", pixelSize: 1024 },
+
+        // macOS (10 assets)
+        { idiom: "mac", scale: "1x", size: "16x16", filename: "icon-mac-16x16.png", pixelSize: 16 },
+        { idiom: "mac", scale: "2x", size: "16x16", filename: "icon-mac-16x16@2x.png", pixelSize: 32 },
+        { idiom: "mac", scale: "1x", size: "32x32", filename: "icon-mac-32x32.png", pixelSize: 32 },
+        { idiom: "mac", scale: "2x", size: "32x32", filename: "icon-mac-32x32@2x.png", pixelSize: 64 },
+        { idiom: "mac", scale: "1x", size: "128x128", filename: "icon-mac-128x128.png", pixelSize: 128 },
+        { idiom: "mac", scale: "2x", size: "128x128", filename: "icon-mac-128x128@2x.png", pixelSize: 256 },
+        { idiom: "mac", scale: "1x", size: "256x256", filename: "icon-mac-256x256.png", pixelSize: 256 },
+        { idiom: "mac", scale: "2x", size: "256x256", filename: "icon-mac-256x256@2x.png", pixelSize: 512 },
+        { idiom: "mac", scale: "1x", size: "512x512", filename: "icon-mac-512x512.png", pixelSize: 512 },
+        { idiom: "mac", scale: "2x", size: "512x512", filename: "icon-mac-512x512@2x.png", pixelSize: 1024 },
+
+        // watchOS Universal (20 assets)
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "22x22", filename: "icon-watchos-22x22@2x.png", pixelSize: 44 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "24x24", filename: "icon-watchos-24x24@2x.png", pixelSize: 48 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "27.5x27.5", filename: "icon-watchos-27.5x27.5@2x.png", pixelSize: 55 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "29x29", filename: "icon-watchos-29x29@2x.png", pixelSize: 58 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "30x30", filename: "icon-watchos-30x30@2x.png", pixelSize: 60 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "32x32", filename: "icon-watchos-32x32@2x.png", pixelSize: 64 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "33x33", filename: "icon-watchos-33x33@2x.png", pixelSize: 66 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "40x40", filename: "icon-watchos-40x40@2x.png", pixelSize: 80 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "43.5x43.5", filename: "icon-watchos-43.5x43.5@2x.png", pixelSize: 87 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "44x44", filename: "icon-watchos-44x44@2x.png", pixelSize: 88 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "46x46", filename: "icon-watchos-46x46@2x.png", pixelSize: 92 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "50x50", filename: "icon-watchos-50x50@2x.png", pixelSize: 100 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "51x51", filename: "icon-watchos-51x51@2x.png", pixelSize: 102 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "54x54", filename: "icon-watchos-54x54@2x.png", pixelSize: 108 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "86x86", filename: "icon-watchos-86x86@2x.png", pixelSize: 172 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "98x98", filename: "icon-watchos-98x98@2x.png", pixelSize: 196 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "108x108", filename: "icon-watchos-108x108@2x.png", pixelSize: 216 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "117x117", filename: "icon-watchos-117x117@2x.png", pixelSize: 234 },
+        { idiom: "universal", platform: "watchos", scale: "2x", size: "129x129", filename: "icon-watchos-129x129@2x.png", pixelSize: 258 },
+        { idiom: "universal", platform: "watchos", size: "1024x1024", filename: "icon-watchos-1024x1024.png", pixelSize: 1024 }
+      ];
+
+      appleIcons.forEach(icon => {
+        appIconSet.file(icon.filename, createIconBlob(icon.pixelSize, 'flat'), { base64: true });
+      });
+
+      const contentsImages = appleIcons.map(icon => {
+        const item = {
+          idiom: icon.idiom,
+          size: icon.size,
+          filename: icon.filename
+        };
+        if (icon.platform) item.platform = icon.platform;
+        if (icon.scale) item.scale = icon.scale;
+        return item;
+      });
+
+      const contentsJson = {
+        images: contentsImages,
+        info: {
+          author: "xcode",
+          version: 1
+        }
+      };
+      appIconSet.file("Contents.json", JSON.stringify(contentsJson, null, 2));
+
+      // Also provide Classic iOS separated catalog for legacy projects
+      const classicSet = appleFolder.folder("Classic-iOS-AppIcon.appiconset");
+      const classicIosIcons = [
         { filename: "Icon-App-20x20@1x.png", size: 20 },
         { filename: "Icon-App-20x20@2x.png", size: 40 },
         { filename: "Icon-App-20x20@3x.png", size: 60 },
@@ -1508,12 +1616,10 @@ Example format:
         { filename: "Icon-App-83.5x83.5@2x.png", size: 167 },
         { filename: "Icon-App-1024x1024@1x.png", size: 1024 }
       ];
-
-      iosIcons.forEach(icon => {
-        appIconSet.file(icon.filename, createIconBlob(icon.size, 'flat'), { base64: true });
+      classicIosIcons.forEach(icon => {
+        classicSet.file(icon.filename, createIconBlob(icon.size, 'flat'), { base64: true });
       });
-
-      const contentsJson = {
+      const classicContentsJson = {
         images: [
           { size: "20x20", idiom: "iphone", filename: "Icon-App-20x20@2x.png", scale: "2x" },
           { size: "20x20", idiom: "iphone", filename: "Icon-App-20x20@3x.png", scale: "3x" },
@@ -1537,7 +1643,7 @@ Example format:
         ],
         info: { version: 1, author: "xcode" }
       };
-      appIconSet.file("Contents.json", JSON.stringify(contentsJson, null, 2));
+      classicSet.file("Contents.json", JSON.stringify(classicContentsJson, null, 2));
 
       // Messages Icon stickers
       const messagesSet = appleFolder.folder("Messages Icon.stickersiconset");
@@ -1711,6 +1817,29 @@ Example format:
       img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleDeleteScreen = (e, indexToDelete) => {
+    e.stopPropagation();
+    if (screens.length <= 1) {
+      updateCurrentScreen({
+        screenshot: null,
+        screenshot2: null,
+        title: 'Your Amazing\nApp Name',
+        subtitle: 'Showcase your core value proposition\nand hook users immediately.'
+      });
+      setAiToast('🔄 Screen content reset');
+      setTimeout(() => setAiToast(''), 2500);
+      return;
+    }
+    setScreens(prev => prev.filter((_, idx) => idx !== indexToDelete));
+    if (currentScreenIndex === indexToDelete) {
+      setCurrentScreenIndex(Math.max(0, indexToDelete - 1));
+    } else if (currentScreenIndex > indexToDelete) {
+      setCurrentScreenIndex(currentScreenIndex - 1);
+    }
+    setAiToast('🗑️ Mockup screen removed');
+    setTimeout(() => setAiToast(''), 2500);
   };
 
   // Zoom and Pan Controls
@@ -2189,20 +2318,53 @@ Example format:
         </div>
 
         {/* Screen Carousel Strip */}
-        <div className="bg-gray-950/80 px-4 py-2.5 border-b border-gray-800/80 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-            {screens.map((scr, idx) => (
-              <button
-                key={scr.id}
-                onClick={() => setCurrentScreenIndex(idx)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-all cursor-pointer ${currentScreenIndex === idx ? 'bg-blue-600/30 border-blue-500 text-blue-100 shadow ring-1 ring-blue-500/30' : 'bg-gray-800/60 border-gray-700/80 text-gray-400 hover:text-gray-200'}`}
-              >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: scr.bgColor1 }}></span>
-                <span>{scr.label}</span>
-              </button>
-            ))}
+        <div className="bg-gray-950/80 px-3.5 py-2.5 border-b border-gray-800/80 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
+            {screens.map((scr, idx) => {
+              const match = scr.label.match(/^(\d+\.?)\s*(.*)$/);
+              const numPart = match ? match[1] : `${idx + 1}.`;
+              const textPart = match && match[2] ? match[2] : (scr.label || `Screen ${idx + 1}`);
+
+              return (
+                <div
+                  key={scr.id}
+                  className={`group/screen relative flex-shrink-0 flex items-center rounded-xl border transition-all ${
+                    currentScreenIndex === idx
+                      ? 'bg-blue-600/25 border-blue-500 text-white shadow-md ring-1 ring-blue-500/40'
+                      : 'bg-gray-900/90 border-gray-800 hover:border-gray-700 text-gray-300 hover:text-white'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setCurrentScreenIndex(idx)}
+                    className="flex items-center gap-2 pl-3 pr-6 py-1.5 cursor-pointer text-left focus:outline-none min-h-[44px]"
+                  >
+                    <span 
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-sm" 
+                      style={{ backgroundColor: scr.bgColor1 }}
+                    />
+                    <div className="flex flex-col items-center justify-center min-w-[54px]">
+                      <span className="text-xs font-bold leading-tight text-white">{numPart}</span>
+                      <span className="text-xs font-bold leading-tight text-white tracking-tight">{textPart}</span>
+                    </div>
+                  </button>
+
+                  {/* Cancel Icon Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteScreen(e, idx)}
+                    className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-600 bg-gray-800/90 border border-gray-700/60 shadow-sm transition-colors cursor-pointer z-10"
+                    title={screens.length > 1 ? `Delete / Cancel ${scr.label}` : 'Reset Screen'}
+                  >
+                    <IconClose size={9} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
+
           <button
+            type="button"
             onClick={() => {
               const nextId = `screen-${Date.now()}`;
               const num = screens.length + 1;
@@ -2218,7 +2380,7 @@ Example format:
               }]);
               setCurrentScreenIndex(screens.length);
             }}
-            className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-transform active:scale-95 cursor-pointer"
+            className="w-9 h-11 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center flex-shrink-0 transition-transform active:scale-95 shadow-md cursor-pointer ml-1"
             title="Add Mockup Screen"
           >
             <IconPlus />
@@ -2295,50 +2457,102 @@ Example format:
                 </div>
               </div>
 
-              {/* Primary Screenshot Upload Box */}
+              {/* Primary Screenshot Upload Box & Added Mockup Area */}
               <div>
-                <label className="block text-xs font-medium text-gray-300 mb-2">App Screenshot</label>
-
-                <div className="relative border-2 border-dashed border-gray-700 rounded-xl p-6 hover:border-indigo-500 hover:bg-gray-800/50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer group">
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleUploadScreenshot} 
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      width: '100%',
-                      height: '100%',
-                      opacity: 0,
-                      cursor: 'pointer',
-                      zIndex: 20
-                    }} 
-                  />
-                  <div className="bg-gray-800 rounded-full p-3 mb-2.5 group-hover:bg-indigo-900/50 group-hover:text-indigo-400 transition-colors">
-                    <IconUpload />
-                  </div>
-                  <p className="text-xs font-medium text-gray-200">Click or drag image to upload</p>
-                  <p className="text-[10px] text-gray-500 mt-1">PNG, JPG up to 10MB</p>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-medium text-gray-300">App Screenshot</label>
+                  {current.screenshot && (
+                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      Mockup Attached
+                    </span>
+                  )}
                 </div>
-                {current.screenshot && (
-                  <button 
-                    onClick={() => updateCurrentScreen({ screenshot: null })} 
-                    className="mt-2 text-xs text-red-400 hover:text-red-300 w-full text-right cursor-pointer"
-                  >
-                    Remove Screenshot
-                  </button>
-                )}
-              </div>
 
-              {/* Secondary Screenshot for Dual Mockup */}
-              {current.layout === 'dual' && (
-                <div className="bg-indigo-950/20 border border-indigo-500/30 p-3.5 rounded-xl space-y-2">
-                  <label className="block text-xs font-medium text-indigo-300">Secondary Mockup (2nd Phone)</label>
-                  <div className="relative border-2 border-dashed border-indigo-700/60 rounded-xl p-4 hover:border-indigo-400 hover:bg-gray-800/40 transition-colors flex flex-col items-center justify-center text-center cursor-pointer">
+                {current.screenshot ? (
+                  <div className="relative bg-gray-900 border border-indigo-500/40 rounded-xl p-3 shadow-lg group">
+                    <div className="flex items-center gap-3">
+                      {/* Thumbnail Preview with Cancel Icon */}
+                      <div className="relative w-16 h-24 rounded-lg overflow-hidden bg-gray-950 border border-gray-700 flex-shrink-0 flex items-center justify-center group/thumb shadow-inner">
+                        <img 
+                          src={current.screenshot.src} 
+                          alt="Added Mockup" 
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Cancel Icon on Thumbnail */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateCurrentScreen({ screenshot: null });
+                            setAiToast('🗑️ Mockup screenshot removed');
+                            setTimeout(() => setAiToast(''), 2500);
+                          }}
+                          className="absolute inset-0 bg-black/60 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center text-red-400 hover:text-red-300 transition-opacity cursor-pointer"
+                          title="Cancel / Remove Mockup Image"
+                        >
+                          <div className="p-1.5 bg-red-600/40 rounded-full border border-red-500/50">
+                            <IconClose size={16} />
+                          </div>
+                        </button>
+                      </div>
+
+                      {/* Mockup Info & Action Buttons */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between h-24 py-0.5">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-semibold text-white truncate">Mockup Image</h4>
+                            {/* Cancel Icon Button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateCurrentScreen({ screenshot: null });
+                                setAiToast('🗑️ Mockup screenshot removed');
+                                setTimeout(() => setAiToast(''), 2500);
+                              }}
+                              className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                              title="Cancel / Remove Mockup Image"
+                            >
+                              <IconClose size={14} />
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-gray-400 mt-0.5">
+                            {current.screenshot.naturalWidth || current.screenshot.width ? `${current.screenshot.naturalWidth || current.screenshot.width} × ${current.screenshot.naturalHeight || current.screenshot.height} px` : 'Screenshot attached'}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-2">
+                          <label className="relative flex-1 py-1 px-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg border border-gray-700 text-center cursor-pointer transition-colors">
+                            <span>Replace</span>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              onChange={handleUploadScreenshot} 
+                              className="hidden" 
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateCurrentScreen({ screenshot: null });
+                              setAiToast('🗑️ Mockup screenshot removed');
+                              setTimeout(() => setAiToast(''), 2500);
+                            }}
+                            className="flex items-center gap-1 py-1 px-2.5 bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-200 text-xs font-medium rounded-lg border border-red-800/60 transition-colors cursor-pointer"
+                            title="Cancel / Remove Mockup"
+                          >
+                            <IconClose size={12} />
+                            <span>Cancel</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative border-2 border-dashed border-gray-700 rounded-xl p-6 hover:border-indigo-500 hover:bg-gray-800/50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer group">
                     <input 
                       type="file" 
                       accept="image/*" 
-                      onChange={handleUploadScreenshot2} 
+                      onChange={handleUploadScreenshot} 
                       style={{
                         position: 'absolute',
                         inset: 0,
@@ -2349,16 +2563,116 @@ Example format:
                         zIndex: 20
                       }} 
                     />
-                    <p className="text-xs text-indigo-200">Upload 2nd Screenshot (Optional)</p>
-                    <p className="text-[10px] text-indigo-400/70 mt-0.5">Will fallback to primary screenshot if empty</p>
+                    <div className="bg-gray-800 rounded-full p-3 mb-2.5 group-hover:bg-indigo-900/50 group-hover:text-indigo-400 transition-colors">
+                      <IconUpload />
+                    </div>
+                    <p className="text-xs font-medium text-gray-200">Click or drag image to upload</p>
+                    <p className="text-[10px] text-gray-500 mt-1">PNG, JPG up to 10MB</p>
                   </div>
-                  {current.screenshot2 && (
-                    <button 
-                      onClick={() => updateCurrentScreen({ screenshot2: null })} 
-                      className="text-xs text-red-400 hover:text-red-300 w-full text-right cursor-pointer"
-                    >
-                      Remove 2nd Screenshot
-                    </button>
+                )}
+              </div>
+
+              {/* Secondary Screenshot for Dual Mockup */}
+              {current.layout === 'dual' && (
+                <div className="bg-indigo-950/20 border border-indigo-500/30 p-3.5 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-medium text-indigo-300">Secondary Mockup (2nd Phone)</label>
+                    {current.screenshot2 && (
+                      <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-950/80 border border-indigo-800/50 px-2 py-0.5 rounded-full">
+                        Attached
+                      </span>
+                    )}
+                  </div>
+
+                  {current.screenshot2 ? (
+                    <div className="relative bg-gray-900/90 border border-indigo-500/40 rounded-xl p-3 shadow-lg group">
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-14 h-20 rounded-lg overflow-hidden bg-gray-950 border border-gray-700 flex-shrink-0 flex items-center justify-center group/thumb shadow-inner">
+                          <img 
+                            src={current.screenshot2.src} 
+                            alt="Secondary Mockup" 
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateCurrentScreen({ screenshot2: null });
+                              setAiToast('🗑️ Secondary mockup removed');
+                              setTimeout(() => setAiToast(''), 2500);
+                            }}
+                            className="absolute inset-0 bg-black/60 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center text-red-400 hover:text-red-300 transition-opacity cursor-pointer"
+                            title="Cancel / Remove Secondary Mockup"
+                          >
+                            <div className="p-1 bg-red-600/40 rounded-full border border-red-500/50">
+                              <IconClose size={14} />
+                            </div>
+                          </button>
+                        </div>
+                        <div className="flex-1 min-w-0 flex flex-col justify-between h-20 py-0.5">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-xs font-semibold text-indigo-200 truncate">2nd Phone Mockup</h4>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  updateCurrentScreen({ screenshot2: null });
+                                  setAiToast('🗑️ Secondary mockup removed');
+                                  setTimeout(() => setAiToast(''), 2500);
+                                }}
+                                className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                                title="Cancel / Remove Secondary Mockup"
+                              >
+                                <IconClose size={14} />
+                              </button>
+                            </div>
+                            <p className="text-[10px] text-gray-400">Used for secondary device</p>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <label className="relative flex-1 py-1 px-2 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg border border-gray-700 text-center cursor-pointer transition-colors">
+                              <span>Replace</span>
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={handleUploadScreenshot2} 
+                                className="hidden" 
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateCurrentScreen({ screenshot2: null });
+                                setAiToast('🗑️ Secondary mockup removed');
+                                setTimeout(() => setAiToast(''), 2500);
+                              }}
+                              className="flex items-center gap-1 py-1 px-2 bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-200 text-xs font-medium rounded-lg border border-red-800/60 transition-colors cursor-pointer"
+                              title="Cancel / Remove 2nd Mockup"
+                            >
+                              <IconClose size={12} />
+                              <span>Cancel</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative border-2 border-dashed border-indigo-700/60 rounded-xl p-4 hover:border-indigo-400 hover:bg-gray-800/40 transition-colors flex flex-col items-center justify-center text-center cursor-pointer">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleUploadScreenshot2} 
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          width: '100%',
+                          height: '100%',
+                          opacity: 0,
+                          cursor: 'pointer',
+                          zIndex: 20
+                        }} 
+                      />
+                      <p className="text-xs text-indigo-200">Upload 2nd Screenshot (Optional)</p>
+                      <p className="text-[10px] text-indigo-400/70 mt-0.5">Will fallback to primary screenshot if empty</p>
+                    </div>
                   )}
                 </div>
               )}
@@ -2994,39 +3308,66 @@ Example format:
                   {/* Upload Image Section */}
                   {logoMode === 'image' && (
                     <div className="space-y-2">
-                      <div className="relative border-2 border-dashed border-gray-700 rounded-xl p-5 hover:border-blue-500 hover:bg-gray-800/50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer group">
-                        <input
-                          ref={logoFileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleUploadLogo}
-                          style={{
-                            position: 'absolute',
-                            inset: 0,
-                            width: '100%',
-                            height: '100%',
-                            opacity: 0,
-                            cursor: 'pointer',
-                            zIndex: 20
-                          }}
-                        />
-                        <div className="bg-gray-800 rounded-full p-2.5 mb-2 group-hover:bg-emerald-900/50 group-hover:text-emerald-400 transition-colors">
-                          <IconUpload />
+                      {logoImage ? (
+                        <div className="bg-gray-900 border border-gray-700 p-3 rounded-xl flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <img src={logoImage.src} alt="Uploaded logo" className="w-10 h-10 object-contain rounded-lg bg-gray-800 border border-gray-700 p-1" />
+                            <div>
+                              <p className="text-xs font-semibold text-white">Logo Attached</p>
+                              <p className="text-[10px] text-gray-400">Custom logo in use</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <label className="py-1 px-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg border border-gray-700 text-center cursor-pointer transition-colors">
+                              <span>Replace</span>
+                              <input
+                                ref={logoFileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleUploadLogo}
+                                className="hidden"
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLogoImage(null);
+                                setAiToast('🗑️ Logo image removed');
+                                setTimeout(() => setAiToast(''), 2500);
+                              }}
+                              className="flex items-center gap-1 py-1 px-2.5 bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-200 text-xs font-medium rounded-lg border border-red-800/60 transition-colors cursor-pointer"
+                              title="Cancel / Remove Logo Image"
+                            >
+                              <IconClose size={12} />
+                              <span>Cancel</span>
+                            </button>
+                          </div>
                         </div>
-                        <p className="text-xs font-medium text-gray-200">
-                          {logoImage ? 'Click to replace logo image' : 'Upload custom logo file'}
-                        </p>
-                        <p className="text-[10px] text-gray-500 mt-0.5">PNG, SVG, JPG (like POS SYSTEM logo)</p>
-                      </div>
-
-                      {logoImage && (
-                        <button
-                          type="button"
-                          onClick={() => setLogoImage(null)}
-                          className="text-xs text-red-400 hover:text-red-300 w-full text-right cursor-pointer"
-                        >
-                          Remove Logo Image
-                        </button>
+                      ) : (
+                        <div className="relative border-2 border-dashed border-gray-700 rounded-xl p-5 hover:border-blue-500 hover:bg-gray-800/50 transition-colors flex flex-col items-center justify-center text-center cursor-pointer group">
+                          <input
+                            ref={logoFileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleUploadLogo}
+                            style={{
+                              position: 'absolute',
+                              inset: 0,
+                              width: '100%',
+                              height: '100%',
+                              opacity: 0,
+                              cursor: 'pointer',
+                              zIndex: 20
+                            }}
+                          />
+                          <div className="bg-gray-800 rounded-full p-2.5 mb-2 group-hover:bg-emerald-900/50 group-hover:text-emerald-400 transition-colors">
+                            <IconUpload />
+                          </div>
+                          <p className="text-xs font-medium text-gray-200">
+                            Upload custom logo file
+                          </p>
+                          <p className="text-[10px] text-gray-500 mt-0.5">PNG, SVG, JPG (like POS SYSTEM logo)</p>
+                        </div>
                       )}
                     </div>
                   )}
@@ -3290,19 +3631,30 @@ Example format:
                   
                   {/* Directory Structure Summary Card */}
                   <div className="bg-gray-950 p-3.5 rounded-xl border border-gray-800 space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-white">
-                      <IconFolder />
-                      <span>Exact Match Folder Hierarchy</span>
+                    <div className="flex items-center justify-between text-xs font-bold text-white">
+                      <div className="flex items-center gap-2">
+                        <IconFolder />
+                        <span>All iOS & Apple Asset Catalogs</span>
+                      </div>
+                      <span className="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/30 font-mono">46 Apple Assets</span>
                     </div>
-                    <div className="font-mono text-[10px] text-gray-400 space-y-1 bg-gray-900 p-2.5 rounded-lg border border-gray-800">
-                      <div className="text-emerald-400 font-semibold">📁 android/</div>
-                      <div className="pl-3 text-gray-400">• drawable/ (ic_launcher_background.xml)</div>
-                      <div className="pl-3 text-gray-400">• mipmap-anydpi-v26/ (adaptive XMLs)</div>
-                      <div className="pl-3 text-gray-400">• mipmap-(m, h, xh, xxh, xxxh)dpi/</div>
+                    <div className="font-mono text-[10px] text-gray-400 space-y-1.5 bg-gray-900 p-2.5 rounded-lg border border-gray-800">
+                      <div className="text-indigo-400 font-semibold flex items-center justify-between">
+                        <span>📁 apple-devices/AppIcon.appiconset/</span>
+                        <span className="text-gray-500 text-[9px]">Xcode / MakeAppIcon</span>
+                      </div>
+                      <div className="pl-3 text-gray-300">• Contents.json <span className="text-gray-500">(Full platform schema)</span></div>
+                      <div className="pl-3 text-emerald-400">• iOS Universal: <span className="text-gray-400">16 icons (20x20@2x to 1024x1024)</span></div>
+                      <div className="pl-3 text-sky-400">• macOS: <span className="text-gray-400">10 icons (16x16 to 512x512@2x)</span></div>
+                      <div className="pl-3 text-purple-400">• watchOS Universal: <span className="text-gray-400">20 icons (22x22@2x to 1024x1024)</span></div>
+                      <div className="text-gray-500 font-semibold mt-1">📁 apple-devices/Classic-iOS-AppIcon.appiconset/</div>
+                      <div className="pl-3 text-gray-500">• 15 iPhone/iPad legacy idiom icons</div>
+                      <div className="text-gray-500 font-semibold mt-1">📁 apple-devices/Messages Icon.stickersiconset/</div>
+                      <div className="pl-3 text-gray-500">• 5 iMessage stickers & Contents.json</div>
+                      <div className="text-emerald-400 font-semibold mt-1.5">📁 android/</div>
+                      <div className="pl-3 text-gray-400">• drawable/ & mipmap-anydpi-v26/ (Adaptive XMLs)</div>
+                      <div className="pl-3 text-gray-400">• mipmap-(m, h, xh, xxh, xxxh)dpi/ (flat, round, fg)</div>
                       <div className="pl-3 text-blue-300">• playstore-icon.png (512×512)</div>
-                      <div className="text-indigo-400 font-semibold mt-1.5">📁 apple-devices/</div>
-                      <div className="pl-3 text-gray-400">• AppIcon.appiconset/ (Contents.json, 1024 master)</div>
-                      <div className="pl-3 text-gray-400">• Messages Icon.stickersiconset/</div>
                     </div>
                   </div>
 
@@ -3313,25 +3665,43 @@ Example format:
                     disabled={isExportingIcons}
                     className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-gradient-to-r bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-xl shadow-black/30 active:scale-98 cursor-pointer disabled:opacity-50"
                   >
-                    {isExportingIcons ? <><IconSpinner /> Generating Multi-Platform Icons...</> : <><IconDownload /> Download Complete Bundle (ZIP)</>}
+                    {isExportingIcons ? <><IconSpinner /> Generating 46 Apple + Android Icons...</> : <><IconDownload /> Download Complete Bundle (ZIP)</>}
                   </button>
 
                   <div className="space-y-2 pt-1">
-                    <label className="block text-xs font-medium text-gray-400">Single Quick Downloads</label>
+                    <label className="block text-xs font-medium text-gray-400">Single Master Quick Downloads</label>
                     <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={handleDownloadAppleMasterIcon}
+                        className="py-2 px-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 rounded-lg text-[11px] font-medium transition-colors cursor-pointer text-center"
+                        title="Download iOS 1024x1024 Master Icon"
+                      >
+                        iOS 1024px Master
+                      </button>
                       <button
                         type="button"
                         onClick={handleDownloadPlayStoreIcon}
                         className="py-2 px-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 rounded-lg text-[11px] font-medium transition-colors cursor-pointer text-center"
+                        title="Download Google Play Store 512x512 Icon"
                       >
                         Play Store 512px
                       </button>
                       <button
                         type="button"
-                        onClick={handleDownloadAppleMasterIcon}
+                        onClick={handleDownloadMacMasterIcon}
                         className="py-2 px-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 rounded-lg text-[11px] font-medium transition-colors cursor-pointer text-center"
+                        title="Download macOS 512x512@2x (1024px) Master Icon"
                       >
-                        Apple 1024px
+                        macOS 1024px
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadWatchMasterIcon}
+                        className="py-2 px-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 rounded-lg text-[11px] font-medium transition-colors cursor-pointer text-center"
+                        title="Download watchOS 1024x1024 Master Icon"
+                      >
+                        watchOS 1024px
                       </button>
                     </div>
                   </div>
@@ -3453,8 +3823,24 @@ Example format:
                 title="Add or replace mockup image"
               >
                 <IconImage />
-                <span>Add Image</span>
+                <span>{current.screenshot ? 'Change Image' : 'Add Image'}</span>
               </button>
+
+              {current.screenshot && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateCurrentScreen({ screenshot: null });
+                    setAiToast('🗑️ Mockup image removed');
+                    setTimeout(() => setAiToast(''), 2500);
+                  }}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-300 border border-red-800/60 rounded-xl text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
+                  title="Cancel / Remove Mockup Image"
+                >
+                  <IconClose size={13} />
+                  <span className="hidden sm:inline">Cancel Mockup</span>
+                </button>
+              )}
 
               <div className="h-4 w-px bg-gray-700 mx-1 hidden sm:block"></div>
 
