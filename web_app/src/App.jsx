@@ -581,115 +581,155 @@ Tap Install and launch your next high-converting store listing today!`
     return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
   };
 
-  const handleGenerateScreensAI = async () => {
+  const handleGenerateScreensAI = async (options = {}) => {
+    const { targetIndex = -1 } = options;
     setIsGeneratingScreensAI(true);
-    const promptConcept = aiAppPrompt.trim() || 'Productivity & Focus App';
-    const isFeature = presetKey === 'play-feature';
+    const promptConcept = aiAppPrompt.trim() || appName.trim() || 'Mobile Application';
 
     try {
+      // 1. Gather screenshots to analyze with Gemini Vision
+      const visionImages = [];
+      const screensToAnalyze = targetIndex >= 0 && screens[targetIndex]
+        ? [{ screen: screens[targetIndex], index: targetIndex }]
+        : screens.map((scr, idx) => ({ screen: scr, index: idx }));
+
+      screensToAnalyze.forEach(({ screen: scr, index: idx }) => {
+        const sourceImg = scr.screenshot || scr.screenshot2;
+        if (sourceImg) {
+          try {
+            const off = document.createElement('canvas');
+            const maxDim = 640;
+            let w = sourceImg.naturalWidth || sourceImg.width || maxDim;
+            let h = sourceImg.naturalHeight || sourceImg.height || maxDim;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            off.width = w;
+            off.height = h;
+            const ctx = off.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(sourceImg, 0, 0, w, h);
+              const base64 = off.toDataURL('image/jpeg', 0.85).split(',')[1];
+              if (base64) {
+                visionImages.push({
+                  mimeType: 'image/jpeg',
+                  data: base64,
+                  screenIndex: idx,
+                  label: scr.label || `Screen ${idx + 1}`
+                });
+              }
+            }
+          } catch (e) {
+            console.warn(`Could not prepare screenshot for screen ${idx + 1}:`, e);
+          }
+        }
+      });
+
       let generatedData = null;
       if (geminiApiKey.trim()) {
-        const sysPrompt = `You are an App Store & Google Play marketing designer.
-Generate a cohesive 3-screen screenshot series configuration for app: "${promptConcept}".
-Return STRICT JSON ONLY, no markdown ticks, no commentary. Format:
+        const screenCount = screensToAnalyze.length;
+        const uploadedCount = visionImages.length;
+        const screenListDesc = screensToAnalyze.map(({ screen: s, index: idx }) => {
+          const hasImg = visionImages.find(v => v.screenIndex === idx);
+          return `- Screen ${idx + 1} [Current Label: "${s.label}", Current Title: "${s.title.replace(/\n/g, ' ')}", Current Subtitle: "${s.subtitle}"] ${hasImg ? '(UI Screenshot attached)' : '(No screenshot uploaded yet)'}`;
+        }).join('\n');
+
+        const sysPrompt = `You are a world-class App Store Optimization (ASO) & mobile app marketing copywriter.
+I have provided mobile app screens. There are ${screenCount} screens to analyze (${uploadedCount} have attached UI screenshots).
+App Context / Concept: "${promptConcept}" (Current App Name: "${appName.trim() || 'App'}").
+
+Screens to write headlines for:
+${screenListDesc}
+
+MANDATORY RULES:
+1. DETECT SCREENSHOT CONTENT: Look at each attached UI screenshot image. Analyze the exact functionality, UI widgets, buttons, transaction flows, and user value shown on that specific screen.
+2. WRITE HIGH-CONVERTING HEADLINES & SUBTITLES:
+   - "title": Punchy, conversion-focused headline in exactly 2 short lines separated by "\\n" (4-6 words total, e.g. "Lightning Fast POS\\nInstant Receipt Printing"). Must describe what the user sees in that specific screen!
+   - "subtitle": Clear, benefit-driven explanation of that feature (under 12 words).
+   - "label": Short 2-3 word label for the screen (e.g. "1. POS Register", "2. Menu Items", "3. Reports").
+3. DO NOT output any colors, backgrounds, or layouts. TEXT ONLY.
+4. Output an array of exactly ${screenCount} screens corresponding to each analyzed screen index.
+
+Return STRICT JSON ONLY, no markdown blocks, no commentary:
 {
-  "appName": "Short App Name",
+  "appName": "Detected or Refined App Name",
   "screens": [
     {
-      "label": "1. Welcome",
-      "title": "Hooky Headline\\nNext Line",
-      "subtitle": "Benefit-driven subtitle under 12 words",
-      "bgColor1": "#hex1",
-      "bgColor2": "#hex2",
-      "bgAngle": "diagonal",
-      "layout": "split-right"
-    },
-    {
-      "label": "2. Core Feature",
-      "title": "Action Headline\\nSecond Line",
-      "subtitle": "Key feature explanation",
-      "bgColor1": "#hex1",
-      "bgColor2": "#hex2",
-      "bgAngle": "diagonal",
-      "layout": "hero-float"
-    },
-    {
-      "label": "3. Insights",
-      "title": "Track Progress\\nIn Real Time",
-      "subtitle": "Outcome achieved with app",
-      "bgColor1": "#hex1",
-      "bgColor2": "#hex2",
-      "bgAngle": "diagonal",
-      "layout": "isometric"
+      "screenIndex": ${screensToAnalyze[0].index},
+      "label": "1. Label",
+      "title": "Headline Line 1\\nHeadline Line 2",
+      "subtitle": "Clear benefit subtitle"
     }
   ]
 }`;
-        const raw = await callGemini(sysPrompt);
+
+        const raw = await callGemini(sysPrompt, visionImages);
         const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
         generatedData = JSON.parse(cleaned);
       } else {
         await new Promise(r => setTimeout(r, 600));
-        const cleanName = promptConcept.split(' ')[0] || 'ZenFlow';
+        const cleanName = promptConcept.split(' ')[0] || appName || 'App';
         generatedData = {
           appName: cleanName,
-          screens: [
-            {
-              label: '1. Welcome',
-              title: `${cleanName}\nMade Simple`,
-              subtitle: `Master your daily ${promptConcept.toLowerCase()} with zero friction.`,
-              bgColor1: '#4338ca',
-              bgColor2: '#0284c7',
-              bgAngle: 'diagonal',
-              layout: isFeature ? 'split-right' : 'hero-float'
-            },
-            {
-              label: '2. Features',
-              title: `Powerful Tools\nAt Your Fingertips`,
-              subtitle: 'Streamline actions with lightning-fast intuitive controls.',
-              bgColor1: '#ea580c',
-              bgColor2: '#db2777',
-              bgAngle: 'diagonal',
-              layout: isFeature ? 'split-right' : 'isometric'
-            },
-            {
-              label: '3. Insights',
-              title: `Visualize Your\nReal Progress`,
-              subtitle: 'Actionable clarity with automated intelligent stats.',
-              bgColor1: '#065f46',
-              bgColor2: '#0d9488',
-              bgAngle: 'diagonal',
-              layout: isFeature ? 'dual' : 'stack'
+          screens: screensToAnalyze.map(({ screen: s, index: idx }) => {
+            const num = idx + 1;
+            let title = `Screen ${num}\nFeature Focus`;
+            let sub = `Streamline your ${promptConcept.toLowerCase()} workflow effortlessly.`;
+            if (idx === 0) {
+              title = `${cleanName}\nMade Simple`;
+              sub = `Fast, reliable, and beautifully designed for daily use.`;
+            } else if (idx === 1) {
+              title = `Smart Controls\nAt Your Fingertips`;
+              sub = `Execute actions with speed and total precision.`;
+            } else if (idx === 2) {
+              title = `Real-Time Data\nInstant Insights`;
+              sub = `Track progress and maximize performance anytime.`;
             }
-          ]
+            return {
+              screenIndex: idx,
+              label: s.label || `${num}. Feature`,
+              title,
+              subtitle: sub
+            };
+          })
         };
       }
 
       if (generatedData?.screens) {
-        if (generatedData.appName) setAppName(generatedData.appName);
+        if (generatedData.appName && !appName.trim()) {
+          setAppName(generatedData.appName);
+        }
         setScreens(prev => {
           const next = [...prev];
-          generatedData.screens.forEach((aiScr, i) => {
-            const tSize = isFeature ? 64 : 100;
-            const sSize = isFeature ? 30 : 50;
-            if (next[i]) {
-              next[i] = {
-                ...next[i],
-                label: aiScr.label || next[i].label,
-                title: aiScr.title || next[i].title,
-                subtitle: aiScr.subtitle || next[i].subtitle,
-                bgColor1: aiScr.bgColor1 || next[i].bgColor1,
-                bgColor2: aiScr.bgColor2 || next[i].bgColor2,
-                bgAngle: aiScr.bgAngle || 'diagonal',
-                layout: aiScr.layout || 'split-right',
-                titleSize: tSize,
-                subtitleSize: sSize
+          generatedData.screens.forEach(aiScr => {
+            const targetIdx = typeof aiScr.screenIndex === 'number' && next[aiScr.screenIndex] 
+              ? aiScr.screenIndex 
+              : -1;
+            if (targetIdx >= 0 && next[targetIdx]) {
+              next[targetIdx] = {
+                ...next[targetIdx],
+                label: aiScr.label || next[targetIdx].label,
+                title: aiScr.title || next[targetIdx].title,
+                subtitle: aiScr.subtitle || next[targetIdx].subtitle
+                // CRITICAL: bgColor1, bgColor2, bgType, bgAngle, layout, deviceType, deviceScale, yOffset, screenshot ARE PRESERVED! NO BACKGROUND CHANGE!
               };
             }
           });
           return next;
         });
-        setAiToast(`✨ Auto-generated 3 screens for "${promptConcept}"!`);
-        setTimeout(() => setAiToast(''), 3500);
+
+        const updatedCount = generatedData.screens.length;
+        const msg = targetIndex >= 0 
+          ? `✨ Updated Screen ${targetIndex + 1} text from screenshot!`
+          : `✨ Detected screenshots & updated text across all ${updatedCount} screens! (Backgrounds unchanged)`;
+        setAiToast(msg);
+        setTimeout(() => setAiToast(''), 4000);
       }
     } catch (err) {
       console.error(err);
@@ -2746,7 +2786,7 @@ Example format:
                     <span className="p-1 bg-indigo-600/30 text-indigo-400 rounded-md">
                       <IconSparkles />
                     </span>
-                    <span className="text-xs font-bold text-white">Generate with Gemini AI</span>
+                    <span className="text-xs font-bold text-white">Detect Mockups & Write Headlines</span>
                   </div>
                   <span className={`text-[10px] px-2.5 py-0.5 rounded-full border flex items-center gap-1.5 font-medium ${
                     isGeminiVerified
@@ -2756,12 +2796,21 @@ Example format:
                       : 'bg-gray-800 text-gray-400 border-gray-700'
                   }`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${isGeminiVerified ? 'bg-emerald-400 animate-pulse' : geminiApiKey ? 'bg-amber-400' : 'bg-gray-500'}`}></span>
-                    {isGeminiVerified ? 'Gemini Verified' : geminiApiKey ? 'Connection Test Needed' : 'Key Required'}
+                    {isGeminiVerified ? 'Vision Ready' : geminiApiKey ? 'Connection Test Needed' : 'Key Required'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between bg-gray-950/70 p-2 rounded-lg border border-gray-800 text-[11px]">
+                  <span className="text-gray-300">
+                    Detected <b>{screens.filter(s => s.screenshot || s.screenshot2).length}</b> of <b>{screens.length}</b> screenshots
+                  </span>
+                  <span className="text-[10px] text-indigo-300 bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-800/60 font-medium">
+                    Text Only • Keeps Backgrounds
                   </span>
                 </div>
 
                 <p className="text-[11px] text-gray-300 leading-tight">
-                  Enter your app concept to automatically design all 3 screens (titles, subtitles, color palettes, and compositions).
+                  Scans all uploaded screenshots to automatically detect UI features and generate matching headlines & subtitles. Your background colors, gradients, and layouts will remain untouched.
                 </p>
 
                 <div className="space-y-2">
@@ -2769,7 +2818,7 @@ Example format:
                     type="text"
                     value={aiAppPrompt}
                     onChange={e => setAiAppPrompt(e.target.value)}
-                    placeholder="e.g. Habit Tracker, Crypto Wallet, Fitness App"
+                    placeholder="Optional concept (e.g. POS Billing & Inventory, Restaurant App)"
                     className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                   />
 
@@ -2792,9 +2841,9 @@ Example format:
                     }`}
                   >
                     {isGeneratingScreensAI ? (
-                      <><IconSpinner /> Generating Mockups with AI...</>
+                      <><IconSpinner /> Detecting Mockups & Writing Headlines...</>
                     ) : isGeminiVerified ? (
-                      <><IconSparkles /> AI Auto-Fill All Screens & Theme</>
+                      <><IconSparkles /> Detect Mockups & Update Text (All {screens.length} Screens)</>
                     ) : (
                       <><IconSettings /> Test Connection in Settings to Enable AI</>
                     )}
@@ -3053,6 +3102,62 @@ Example format:
           {/* Tab: Text */}
           {activeTab === 'text' && (
             <div className="space-y-4">
+              {/* AI Auto-Write from Screenshots Card */}
+              <div className="bg-gray-900 border border-indigo-500/40 rounded-xl p-3 space-y-2.5 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="p-1 bg-indigo-600/30 text-indigo-400 rounded-md">
+                      <IconSparkles />
+                    </span>
+                    <span className="text-xs font-bold text-white">AI Vision Text Generator</span>
+                  </div>
+                  <span className="text-[9px] bg-indigo-950 text-indigo-300 border border-indigo-800/60 px-2 py-0.5 rounded-full font-medium">
+                    Text Only • Keeps BG
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-300 leading-snug">
+                  Scans uploaded UI screenshots to write headlines & subtitles tailored to your app without altering any background colors or layouts.
+                </p>
+                <div className="grid grid-cols-2 gap-2 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isGeminiVerified) {
+                        setSettingsTab('gemini');
+                        setIsSettingsOpen(true);
+                        setTestMessage('Please verify your Gemini key first.');
+                        setTestStatus('info');
+                      } else {
+                        handleGenerateScreensAI({ targetIndex: activeScreenIndex });
+                      }
+                    }}
+                    disabled={isGeneratingScreensAI}
+                    className="py-1.5 px-2 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 rounded-lg text-[11px] font-medium transition-colors cursor-pointer text-center disabled:opacity-50"
+                    title={`Detect screenshot for Screen ${activeScreenIndex + 1} and update its headline only`}
+                  >
+                    {isGeneratingScreensAI ? 'Detecting...' : `Update Screen ${activeScreenIndex + 1}`}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isGeminiVerified) {
+                        setSettingsTab('gemini');
+                        setIsSettingsOpen(true);
+                        setTestMessage('Please verify your Gemini key first.');
+                        setTestStatus('info');
+                      } else {
+                        handleGenerateScreensAI();
+                      }
+                    }}
+                    disabled={isGeneratingScreensAI}
+                    className="py-1.5 px-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[11px] font-semibold transition-colors cursor-pointer text-center disabled:opacity-50 shadow-sm"
+                    title={`Detect screenshots across all ${screens.length} screens and update headlines only`}
+                  >
+                    {isGeneratingScreensAI ? 'Detecting...' : `Update All (${screens.length})`}
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-gray-400 mb-1">Screen Label</label>
                 <input
