@@ -3128,14 +3128,14 @@ Example format:
                         setTestMessage('Please verify your Gemini key first.');
                         setTestStatus('info');
                       } else {
-                        handleGenerateScreensAI({ targetIndex: activeScreenIndex });
+                        handleGenerateScreensAI({ targetIndex: currentScreenIndex });
                       }
                     }}
                     disabled={isGeneratingScreensAI}
                     className="py-1.5 px-2 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 rounded-lg text-[11px] font-medium transition-colors cursor-pointer text-center disabled:opacity-50"
-                    title={`Detect screenshot for Screen ${activeScreenIndex + 1} and update its headline only`}
+                    title={`Detect screenshot for Screen ${currentScreenIndex + 1} and update its headline only`}
                   >
-                    {isGeneratingScreensAI ? 'Detecting...' : `Update Screen ${activeScreenIndex + 1}`}
+                    {isGeneratingScreensAI ? 'Detecting...' : `Update Screen ${currentScreenIndex + 1}`}
                   </button>
                   <button
                     type="button"
@@ -3164,41 +3164,62 @@ Example format:
                   type="text"
                   value={current.label}
                   onChange={e => updateCurrentScreen({ label: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white"
+                  placeholder="e.g. 1. Welcome"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600"
                 />
               </div>
               <div>
-                <div className="flex justify-between mb-1">
+                <div className="flex justify-between items-center mb-1">
                   <label className="text-xs font-medium text-gray-400">Headline Title</label>
-                  <input
-                    type="number"
-                    value={current.titleSize}
-                    onChange={e => updateCurrentScreen({ titleSize: Number(e.target.value) })}
-                    className="w-12 bg-gray-800 border border-gray-700 rounded text-xs text-center"
-                  />
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="color"
+                      value={current.titleColor || '#ffffff'}
+                      onChange={e => updateCurrentScreen({ titleColor: e.target.value })}
+                      className="w-6 h-6 rounded border border-gray-700 cursor-pointer bg-transparent"
+                      title="Title color"
+                    />
+                    <input
+                      type="number"
+                      value={current.titleSize}
+                      onChange={e => updateCurrentScreen({ titleSize: Number(e.target.value) })}
+                      className="w-12 bg-gray-800 border border-gray-700 rounded text-xs text-center text-white"
+                    />
+                  </div>
                 </div>
                 <textarea
                   rows={2}
                   value={current.title}
                   onChange={e => updateCurrentScreen({ title: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white resize-none"
+                  placeholder="Enter headline title..."
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white resize-none placeholder-gray-600 focus:outline-none focus:border-indigo-500"
                 />
               </div>
               <div>
-                <div className="flex justify-between mb-1">
+                <div className="flex justify-between items-center mb-1">
                   <label className="text-xs font-medium text-gray-400">Subtitle</label>
-                  <input
-                    type="number"
-                    value={current.subtitleSize}
-                    onChange={e => updateCurrentScreen({ subtitleSize: Number(e.target.value) })}
-                    className="w-12 bg-gray-800 border border-gray-700 rounded text-xs text-center"
-                  />
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="color"
+                      value={current.subtitleColor || '#e0e7ff'}
+                      onChange={e => updateCurrentScreen({ subtitleColor: e.target.value })}
+                      className="w-6 h-6 rounded border border-gray-700 cursor-pointer bg-transparent"
+                      title="Subtitle color"
+                    />
+                    <input
+                      type="number"
+                      value={current.subtitleSize}
+                      onChange={e => updateCurrentScreen({ subtitleSize: Number(e.target.value) })}
+                      className="w-12 bg-gray-800 border border-gray-700 rounded text-xs text-center text-white"
+                    />
+                  </div>
                 </div>
                 <textarea
                   rows={3}
                   value={current.subtitle}
                   onChange={e => updateCurrentScreen({ subtitle: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white resize-none"
+                  placeholder="Enter subtitle or description..."
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white resize-none placeholder-gray-600 focus:outline-none focus:border-indigo-500"
                 />
               </div>
             </div>
